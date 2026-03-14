@@ -5,4 +5,4 @@ Disallow: /login
 Disallow: /register
 Disallow: /download
 
-Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://social-media.anselmidev.com/sitemap.xml
