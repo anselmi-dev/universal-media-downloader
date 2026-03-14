@@ -1,4 +1,9 @@
-<div class="space-y-12">
+<div
+    class="space-y-12"
+    x-data="umdHistory()"
+    x-init="init()"
+    @download-success.window="add($event.detail.url, $event.detail.platform, $event.detail.label, $event.detail.thumb, $event.detail.count)"
+>
 
     {{-- Hero --}}
     <div class="space-y-5">
@@ -39,25 +44,7 @@
         {{-- Form --}}
         <form wire:submit="download" class="p-4 sm:p-5 flex flex-col sm:flex-row gap-3">
             <div
-                x-data="{
-                    pasted: false,
-                    denied: false,
-                    async paste() {
-                        this.denied = false
-                        try {
-                            const text = await navigator.clipboard.readText()
-                            const input = $el.querySelector('input')
-                            input.value = text
-                            input.dispatchEvent(new Event('input', { bubbles: true }))
-                            input.focus()
-                            this.pasted = true
-                            setTimeout(() => this.pasted = false, 2000)
-                        } catch {
-                            this.denied = true
-                            setTimeout(() => this.denied = false, 2500)
-                        }
-                    }
-                }"
+                x-data="umdPasteBtn()"
                 class="flex-1 relative"
             >
                 <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-600 text-sm select-none pointer-events-none">›</span>
@@ -114,6 +101,65 @@
                 <span class="text-red-500">✕</span> {{ $message }}
             </div>
         @enderror
+    </div>
+
+    {{-- History --}}
+    <div x-show="history.length > 0" x-cloak class="space-y-3">
+        <div class="flex items-center justify-between">
+            <span class="text-xs text-neutral-500 uppercase tracking-widest">◇ {{ __('history') }}</span>
+            <button
+                type="button"
+                @click="clear()"
+                class="text-[11px] text-neutral-600 hover:text-neutral-400 transition-colors"
+            >{{ __('history_clear') }}</button>
+        </div>
+
+        <div class="space-y-1.5">
+            <template x-for="(entry, i) in history" :key="entry.url + i">
+                <div class="flex items-center gap-2.5 group px-3 py-2 border border-neutral-800 rounded hover:border-neutral-700 transition-colors bg-[#111111]">
+
+                    {{-- Thumbnail (if available) --}}
+                    <div class="shrink-0 w-8 h-8 rounded overflow-hidden bg-neutral-900 border border-neutral-800">
+                        <template x-if="entry.thumb">
+                            <img :src="entry.thumb" class="w-full h-full object-cover opacity-70" loading="lazy">
+                        </template>
+                        <template x-if="!entry.thumb">
+                            <div class="w-full h-full flex items-center justify-center text-neutral-700 text-[10px] font-mono" x-text="(entry.platform || '?').charAt(0)"></div>
+                        </template>
+                    </div>
+
+                    {{-- Label + platform + count --}}
+                    <button
+                        type="button"
+                        @click="use(entry.url)"
+                        class="flex-1 text-left min-w-0 group/btn"
+                        :title="entry.url"
+                    >
+                        <div class="text-xs text-neutral-300 group-hover/btn:text-white transition-colors truncate leading-tight" x-text="entry.label || entry.url"></div>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-[10px] text-neutral-600 font-mono" x-text="entry.platform"></span>
+                            <template x-if="entry.count > 1">
+                                <span class="text-[10px] text-neutral-700">· <span x-text="entry.count"></span> items</span>
+                            </template>
+                        </div>
+                    </button>
+
+                    {{-- Timestamp --}}
+                    <span
+                        class="shrink-0 text-[10px] text-neutral-700 tabular-nums hidden sm:block"
+                        x-text="timeAgo(entry.ts)"
+                    ></span>
+
+                    {{-- Remove --}}
+                    <button
+                        type="button"
+                        @click.stop="remove(entry.url)"
+                        class="shrink-0 w-5 h-5 flex items-center justify-center text-neutral-700 hover:text-neutral-300 transition-colors opacity-0 group-hover:opacity-100 rounded hover:bg-neutral-800 text-xs leading-none"
+                        title="{{ __('history_remove') }}"
+                    >✕</button>
+                </div>
+            </template>
+        </div>
     </div>
 
     {{-- Error state --}}
@@ -259,3 +305,89 @@
     @endif
 
 </div>
+
+<script>
+function umdHistory() {
+    const KEY     = 'umd_history'
+    const MAX     = 20
+
+    return {
+        history: [],
+
+        init() {
+            try {
+                this.history = JSON.parse(localStorage.getItem(KEY) || '[]')
+            } catch {
+                this.history = []
+            }
+        },
+
+        add(url, platform, label, thumb, count) {
+            this.history = this.history.filter(h => h.url !== url)
+            this.history.unshift({
+                url,
+                platform: platform || '?',
+                label:    label    || url,
+                thumb:    thumb    || null,
+                count:    count    || 1,
+                ts:       Date.now(),
+            })
+            this.history = this.history.slice(0, MAX)
+            this._save()
+        },
+
+        remove(url) {
+            this.history = this.history.filter(h => h.url !== url)
+            this._save()
+        },
+
+        clear() {
+            this.history = []
+            localStorage.removeItem(KEY)
+        },
+
+        use(url) {
+            const input = document.querySelector('[wire\\:model="url"]')
+            if (!input) return
+            input.value = url
+            input.dispatchEvent(new Event('input', { bubbles: true }))
+            input.focus()
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+        },
+
+        timeAgo(ts) {
+            const diff = Math.floor((Date.now() - ts) / 1000)
+            if (diff < 60)  return diff + 's'
+            if (diff < 3600) return Math.floor(diff / 60) + 'm'
+            if (diff < 86400) return Math.floor(diff / 3600) + 'h'
+            return Math.floor(diff / 86400) + 'd'
+        },
+
+        _save() {
+            localStorage.setItem(KEY, JSON.stringify(this.history))
+        }
+    }
+}
+
+function umdPasteBtn() {
+    return {
+        pasted: false,
+        denied: false,
+        async paste() {
+            this.denied = false
+            try {
+                const text  = await navigator.clipboard.readText()
+                const input = this.$el.querySelector('input')
+                input.value = text
+                input.dispatchEvent(new Event('input', { bubbles: true }))
+                input.focus()
+                this.pasted = true
+                setTimeout(() => this.pasted = false, 2000)
+            } catch {
+                this.denied = true
+                setTimeout(() => this.denied = false, 2500)
+            }
+        }
+    }
+}
+</script>

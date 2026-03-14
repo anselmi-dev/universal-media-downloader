@@ -13,10 +13,22 @@ class SetLocale
 
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $request->session()->get('locale');
+        // 1. User explicitly chose a locale via the switcher → always respect it
+        $sessionLocale = $request->session()->get('locale');
 
-        if ($locale && in_array($locale, self::SUPPORTED, true)) {
-            App::setLocale($locale);
+        if ($sessionLocale && in_array($sessionLocale, self::SUPPORTED, true)) {
+            App::setLocale($sessionLocale);
+
+            return $next($request);
+        }
+
+        // 2. No manual choice yet → auto-detect from the browser's Accept-Language header
+        //    getPreferredLanguage() handles regional variants (es-MX → es, en-US → en)
+        //    and falls back to the app default when nothing matches.
+        $detected = $request->getPreferredLanguage(self::SUPPORTED);
+
+        if ($detected) {
+            App::setLocale($detected);
         }
 
         return $next($request);
