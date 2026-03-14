@@ -103,7 +103,7 @@
 
     @include('layouts.default.header')
 
-    <main class="flex-1 flex items-start justify-center px-5 sm:px-8 py-16 sm:py-24">
+    <main class="flex-1 flex items-start justify-center px-5 sm:px-8 pb-16 pt-8 sm:pb-24 sm:pt-8">
         <div class="w-full max-w-3xl space-y-20">
             @yield('content')
         </div>
