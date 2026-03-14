@@ -67,6 +67,8 @@
                 <input
                     wire:model="url"
                     type="url"
+                    x-ref="urlInput"
+                    data-umd-url-input
                     placeholder="{{ config('site.placeholder', 'https://x.com/username/status/...') }}"
                     class="w-full h-11 pl-8 pr-28 bg-[#0a0a0a] border border-neutral-700 rounded text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors font-[inherit]"
                     autocomplete="off"
@@ -394,14 +396,22 @@ function umdPasteBtn() {
         async paste() {
             this.denied = false
             try {
-                const text  = await navigator.clipboard.readText()
-                const input = this.$el.querySelector('input')
-                input.value = text
-                input.dispatchEvent(new Event('input', { bubbles: true }))
-                input.focus()
+                const text = await navigator.clipboard.readText()
+                const wire = typeof $wire !== 'undefined' ? $wire : null
+                if (wire) {
+                    wire.set('url', text)
+                } else {
+                    const input = this.$refs?.urlInput ?? this.$el?.querySelector('input[type="url"]') ?? document.querySelector('[data-umd-url-input]')
+                    if (input) {
+                        input.value = text
+                        input.dispatchEvent(new Event('input', { bubbles: true }))
+                        input.focus()
+                    }
+                }
                 this.pasted = true
                 setTimeout(() => this.pasted = false, 2000)
-            } catch {
+            } catch (error) {
+                console.error(error)
                 this.denied = true
                 setTimeout(() => this.denied = false, 2500)
             }

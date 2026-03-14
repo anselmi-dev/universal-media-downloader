@@ -52,6 +52,8 @@ class MediaDownloader extends Component
                 thumb:    $this->firstThumbnail($this->mediaItems),
                 count:    count($this->mediaItems),
             );
+
+            $this->url = '';
         } catch (Throwable $e) {
             $this->error = $e->getMessage();
         }
