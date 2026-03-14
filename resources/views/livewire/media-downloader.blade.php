@@ -6,13 +6,20 @@
 >
 
     {{-- Hero --}}
+    @php
+        $platforms   = config('site.platforms');
+        $social      = ($platforms && count($platforms) === 1) ? strtolower($platforms[0]) : 'default';
+        $heroLabel   = __("$social.label-home") !== "$social.label-home" ? __("$social.label-home") : __('media downloader');
+        $heroTitle   = __("$social.title-home") !== "$social.title-home" ? __("$social.title-home") : __('Download media from social posts');
+        $heroDesc    = __("$social.description-home") !== "$social.description-home" ? __("$social.description-home") : __('Paste any post URL to extract and download every photo and video it contains. No sign-up. No limits.');
+    @endphp
     <div class="space-y-5">
-        <div class="text-xs text-neutral-500 uppercase tracking-widest">◇ {{ __('media downloader') }}</div>
+        <div class="text-xs text-neutral-500 uppercase tracking-widest">◇ {{ $heroLabel }}</div>
         <h1 class="text-3xl sm:text-4xl font-bold text-white leading-tight tracking-tight">
-            {{ __('Download media from social posts') }}
+            {{ $heroTitle }}
         </h1>
         <p class="text-neutral-400 text-sm leading-relaxed max-w-lg">
-            {{ __('Paste any post URL to extract and download every photo and video it contains. No sign-up. No limits.') }}
+            {{ $heroDesc }}
         </p>
 
         {{-- Supported platforms chips (filtered by current site) --}}
