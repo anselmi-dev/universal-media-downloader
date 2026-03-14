@@ -1,0 +1,17 @@
+; ──────────────────────────────────────────────────────────────
+; OPcache + Preload — append to php.ini (Laragon: bin/php/php-X.X.X/php.ini)
+; ──────────────────────────────────────────────────────────────
+;
+; 1. Ensure OPcache is enabled:
+;    opcache.enable=1
+;    opcache.enable_cli=1
+;
+; 2. Recommended production settings:
+;    opcache.memory_consumption=128
+;    opcache.max_accelerated_files=20000
+;    opcache.validate_timestamps=0
+;
+; 3. Preload (use absolute path to your project):
+;    opcache.preload=C:/laragon/www/universal-media-downloader/preload.php
+;
+; 4. Restart PHP/Apache after changes.
