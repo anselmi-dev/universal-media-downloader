@@ -15,17 +15,26 @@
             {{ __('Paste any post URL to extract and download every photo and video it contains. No sign-up. No limits.') }}
         </p>
 
-        {{-- Supported platforms chips --}}
+        {{-- Supported platforms chips (filtered by current site) --}}
+        @php $enabledPlatforms = \App\Services\MediaExtractor\MediaExtractorFactory::enabledPlatforms(); @endphp
         <div class="flex flex-wrap gap-2 pt-1">
+            @if(in_array('Twitter', $enabledPlatforms))
             <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 border border-neutral-700 text-neutral-300 rounded">
                 <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.23H2.747l7.73-8.835L1.254 2.25H8.08l4.261 5.636zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
                 X / Twitter
             </span>
+            @endif
+            @if(in_array('TikTok', $enabledPlatforms))
             <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 border border-neutral-700 text-neutral-300 rounded">TikTok</span>
+            @endif
+            @if(in_array('Instagram', $enabledPlatforms))
             <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 border border-neutral-700 text-neutral-300 rounded">{{ __('Instagram — soon') }}</span>
+            @endif
+            @if(in_array('Reddit', $enabledPlatforms))
             <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 border border-neutral-700 text-neutral-300 rounded">{{ __('Reddit — soon') }}</span>
+            @endif
         </div>
     </div>
 
@@ -51,7 +60,7 @@
                 <input
                     wire:model="url"
                     type="url"
-                    placeholder="https://x.com/username/status/..."
+                    placeholder="{{ config('site.placeholder', 'https://x.com/username/status/...') }}"
                     class="w-full h-11 pl-8 pr-28 bg-[#0a0a0a] border border-neutral-700 rounded text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors font-[inherit]"
                     autocomplete="off"
                     autofocus

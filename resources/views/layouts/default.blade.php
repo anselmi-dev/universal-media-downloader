@@ -4,9 +4,16 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
+    @php
+        $locale      = app()->getLocale();
+        $siteTitle   = config("site.seo.$locale.title")   ?? config('site.seo.en.title')   ?? __('meta_title');
+        $siteDesc    = config("site.seo.$locale.description") ?? config('site.seo.en.description') ?? __('meta_description');
+        $siteName    = config('site.name', config('app.name', 'MediaGet'));
+    @endphp
+
     {{-- Primary SEO --}}
-    <title>{{ config('app.name', 'MediaGet') }} — {{ __('meta_title') }}</title>
-    <meta name="description" content="{{ __('meta_description') }}">
+    <title>{{ $siteTitle }}</title>
+    <meta name="description" content="{{ $siteDesc }}">
     @production
         <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     @else
@@ -24,19 +31,19 @@
     {{-- Open Graph --}}
     <meta property="og:type" content="website">
     <meta property="og:url" content="{{ url('/') }}">
-    <meta property="og:site_name" content="{{ config('app.name', 'MediaGet') }}">
-    <meta property="og:title" content="{{ config('app.name', 'MediaGet') }} — {{ __('meta_title') }}">
-    <meta property="og:description" content="{{ __('meta_description') }}">
+    <meta property="og:site_name" content="{{ $siteName }}">
+    <meta property="og:title" content="{{ $siteTitle }}">
+    <meta property="og:description" content="{{ $siteDesc }}">
     <meta property="og:locale" content="{{ app()->getLocale() === 'es' ? 'es_ES' : 'en_US' }}">
     <meta property="og:image" content="{{ asset('og-image.png') }}">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="{{ config('app.name', 'MediaGet') }}">
+    <meta property="og:image:alt" content="{{ $siteName }}">
 
     {{-- Twitter Card --}}
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="{{ config('app.name', 'MediaGet') }} — {{ __('meta_title') }}">
-    <meta name="twitter:description" content="{{ __('meta_description') }}">
+    <meta name="twitter:title" content="{{ $siteTitle }}">
+    <meta name="twitter:description" content="{{ $siteDesc }}">
     <meta name="twitter:image" content="{{ asset('og-image.png') }}">
 
     {{-- Favicons --}}
@@ -47,15 +54,14 @@
 
     {{-- JSON-LD --}}
     @php
-        $appUrl   = rtrim(config('app.url'), '/');
-        $appName  = config('app.name', 'MediaGet');
+        $appUrl = rtrim(config('app.url'), '/');
 
         $schemaWebApp = [
             '@context'            => 'https://schema.org',
             '@type'               => 'WebApplication',
-            'name'                => $appName,
+            'name'                => $siteName,
             'url'                 => $appUrl . '/',
-            'description'         => __('meta_description'),
+            'description'         => $siteDesc,
             'applicationCategory' => 'MultimediaApplication',
             'operatingSystem'     => 'Any',
             'browserRequirements' => 'Requires JavaScript',
