@@ -50,7 +50,7 @@
 
     {{-- Favicons (Google recomienda link rel="icon" para elegibilidad del favicon en búsqueda) --}}
     <link rel="icon" href="/favicon.ico" sizes="any">
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="icon" href="/favicon.svg?v=2026" type="image/svg+xml">
     <meta name="theme-color" content="#F9F6F1">
 
     {{-- JSON-LD --}}
