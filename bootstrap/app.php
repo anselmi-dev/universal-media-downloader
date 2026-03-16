@@ -12,8 +12,16 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(append: [
-            \App\Http\Middleware\SetSite::class,   // must be before SetLocale
-            \App\Http\Middleware\SetLocale::class,
+            \App\Http\Middleware\SetSite::class,
+            \App\Http\Middleware\RecordVisits::class,
+        ]);
+        $middleware->alias([
+            'localize'                => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRoutes::class,
+            'localizationRedirect'    => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationRedirectFilter::class,
+            'localeSessionRedirect'   => \Mcamara\LaravelLocalization\Middleware\LocaleSessionRedirect::class,
+            'localeCookieRedirect'    => \Mcamara\LaravelLocalization\Middleware\LocaleCookieRedirect::class,
+            'localeViewPath'          => \Mcamara\LaravelLocalization\Middleware\LaravelLocalizationViewPath::class,
+            'localeFromUrl'           => \App\Http\Middleware\SetLocaleFromUrl::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -50,4 +50,19 @@ return [
         'session_id' => env('INSTAGRAM_SESSION_ID'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Telegram
+    |--------------------------------------------------------------------------
+    |
+    | Notifications for download requests and errors.
+    | Create a bot via @BotFather, get the token, then add the bot to a chat
+    | and get the chat_id (e.g. use @userinfobot or getUpdates API).
+    |
+    */
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'chat_id' => env('TELEGRAM_CHAT_ID'),
+    ],
+
 ];

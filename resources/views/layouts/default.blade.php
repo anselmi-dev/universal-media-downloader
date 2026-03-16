@@ -20,15 +20,14 @@
         <meta name="robots" content="noindex, nofollow">
     @endproduction
 
-    <link rel="canonical" href="{{ url('/') }}">
+    {{-- Canonical: versión representativa de la URL (Google recomienda rel="canonical") --}}
+    <link rel="canonical" href="{{ url()->current() }}">
 
-    {{-- Language alternates --}}
-    <link rel="alternate" hreflang="en" href="{{ url('/') }}">
-    <link rel="alternate" hreflang="es" href="{{ url('/') }}">
-    <link rel="alternate" hreflang="fr" href="{{ url('/') }}">
-    <link rel="alternate" hreflang="de" href="{{ url('/') }}">
-    <link rel="alternate" hreflang="pt" href="{{ url('/') }}">
-    <link rel="alternate" hreflang="x-default" href="{{ url('/') }}">
+    {{-- hreflang: URLs reales por idioma (mcamara/laravel-localization) --}}
+    @foreach (\Mcamara\LaravelLocalization\Facades\LaravelLocalization::getSupportedLocales() as $code => $locale)
+        <link rel="alternate" hreflang="{{ $code }}" href="{{ \Mcamara\LaravelLocalization\Facades\LaravelLocalization::getLocalizedURL($code) }}">
+    @endforeach
+    <link rel="alternate" hreflang="x-default" href="{{ \Mcamara\LaravelLocalization\Facades\LaravelLocalization::getLocalizedURL(\Mcamara\LaravelLocalization\Facades\LaravelLocalization::getDefaultLocale()) }}">
 
 
     {{-- Open Graph --}}
@@ -49,15 +48,24 @@
     <meta name="twitter:description" content="{{ $siteDesc }}">
     <meta name="twitter:image" content="{{ asset('og-image.png') }}">
 
-    {{-- Favicons --}}
+    {{-- Favicons (Google recomienda link rel="icon" para elegibilidad del favicon en búsqueda) --}}
     <link rel="icon" href="/favicon.ico" sizes="any">
-    {{-- <link rel="icon" href="/favicon.svg" type="image/svg+xml"> --}}
-    {{-- <link rel="apple-touch-icon" href="/apple-touch-icon.png"> --}}
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#0a0a0a">
 
     {{-- JSON-LD --}}
     @php
         $appUrl = rtrim(config('app.url'), '/');
+        $baseUrl = $appUrl . '/';
+
+        // WebSite: señal principal para el site name (Google recomienda WebSite structured data)
+        $schemaWebSite = [
+            '@context'        => 'https://schema.org',
+            '@type'           => 'WebSite',
+            'name'           => $siteName,
+            'alternateName'  => ['Anselmi Downloader', 'AnselmiDev Downloader'],
+            'url'            => $baseUrl,
+        ];
 
         $schemaWebApp = [
             '@context'            => 'https://schema.org',
@@ -95,6 +103,7 @@
                 ->all(),
         ];
     @endphp
+    <script type="application/ld+json">{!! json_encode($schemaWebSite, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     <script type="application/ld+json">{!! json_encode($schemaWebApp, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     <script type="application/ld+json">{!! json_encode($schemaFaq, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 

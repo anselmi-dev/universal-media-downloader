@@ -31,7 +31,7 @@ class SecurityTest extends TestCase
 
         $this->actingAs($user)
             ->withSession(['auth.password_confirmed_at' => time()])
-            ->get(route('security.edit'))
+            ->get(route('security.edit', ['locale' => 'en']))
             ->assertOk()
             ->assertSee('Two-factor authentication')
             ->assertSee('Enable 2FA');
@@ -42,7 +42,7 @@ class SecurityTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($user)
-            ->get(route('security.edit'));
+            ->get(route('security.edit', ['locale' => 'en']));
 
         $response->assertRedirect(route('password.confirm'));
     }
@@ -55,7 +55,7 @@ class SecurityTest extends TestCase
 
         $this->actingAs($user)
             ->withSession(['auth.password_confirmed_at' => time()])
-            ->get(route('security.edit'))
+            ->get(route('security.edit', ['locale' => 'en']))
             ->assertOk()
             ->assertSee('Update password')
             ->assertDontSee('Two-factor authentication');

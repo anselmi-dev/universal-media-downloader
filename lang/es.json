@@ -1,5 +1,5 @@
 {
-    "Download media from social posts": "Descarga videos, posts, historias, reels, fotos de publicaciones sociales",
+    "Download media from social posts": "Descarga medios de X, TikTok, Instagram y Reddit",
     "Paste any post URL to extract and download every photo and video it contains. No sign-up. No limits.": "Pega cualquier URL de publicación para extraer y descargar cada foto y video. Sin registro. Sin límites.",
     "media downloader": "descargador de videos, posts, historias, reels, fotos",
     "paste a post url": "pega una url de publicación",
@@ -43,6 +43,7 @@
     "faq_a3": "No. No hay registro, ni inicio de sesión, ni límite en la cantidad de publicaciones que puedes descargar.",
     "faq_q4": "¿Qué plataformas de redes sociales están disponibles?",
     "faq_a4": "X (Twitter), TikTok, Instagram (publicaciones públicas, reels y carruseles) y Reddit (videos, imágenes y galerías) son compatibles. YouTube Shorts llegará pronto.",
+    "Download by platform": "Descargar por plataforma",
     "features_heading": "¿Por qué usar este descargador?",
     "feature_1_title": "Rápido y gratuito",
     "feature_1_desc": "Descarga videos, fotos y audio de cualquier publicación pública al instante, sin costos ni límites.",

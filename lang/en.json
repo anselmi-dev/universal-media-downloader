@@ -1,5 +1,5 @@
 {
-    "Download media from social posts": "Download videos, posts, stories, reels, photos from social posts",
+    "Download media from social posts": "Download media from X, TikTok, Instagram and Reddit",
     "Paste any post URL to extract and download every photo and video it contains. No sign-up. No limits.": "Paste any post URL to extract and download every photo and video it contains. No sign-up. No limits.",
     "media downloader": "videos, posts, stories, reels, photos downloader",
     "paste a post url": "paste a post url",
@@ -43,6 +43,7 @@
     "faq_a3": "No. There is no registration, no login, and no limit on how many posts you can download.",
     "faq_q4": "Which social media platforms are supported?",
     "faq_a4": "X (Twitter), TikTok, Instagram (public posts, reels, and carousels), and Reddit (videos, images, and galleries) are supported. YouTube Shorts is coming soon.",
+    "Download by platform": "Download by platform",
     "features_heading": "Why use this downloader?",
     "feature_1_title": "Fast & free",
     "feature_1_desc": "Download videos, photos, and audio from any public post instantly, with no cost and no limits.",

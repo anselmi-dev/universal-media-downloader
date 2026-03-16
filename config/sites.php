@@ -19,51 +19,51 @@ return [
     // ── Default / fallback ────────────────────────────────────────────────────
     // Used when the current hostname doesn't match any entry below.
     'default' => [
-        'name'        => 'Social Media Downloader',
+        'name'        => 'Anselmi Media Downloader',
         'platforms'   => null, // null = all platforms enabled
         'placeholder' => 'https://x.com/username/status/...',
         'seo' => [
             'en' => [
-                'title'       => 'Free Video & Photo Downloader — X/Twitter, TikTok, Instagram, Reddit',
-                'description' => 'Download videos and photos from X (Twitter), TikTok, Instagram and Reddit for free. Paste any post URL to save media instantly. No watermark. No account needed.',
+                'title'       => 'Anselmi Media Downloader | Download X, TikTok, Instagram & Reddit Media',
+                'description' => 'Download videos, photos, reels, stories and galleries from public X/Twitter, TikTok, Instagram and Reddit posts. Fast, free, no sign-up.',
             ],
             'es' => [
-                'title'       => 'Descargador Gratis de Videos y Fotos — X/Twitter, TikTok, Instagram, Reddit',
-                'description' => 'Descarga videos y fotos de X (Twitter), TikTok, Instagram y Reddit gratis. Pega cualquier URL para guardar medios al instante. Sin marca de agua. Sin registro.',
+                'title'       => 'Anselmi Media Downloader | Descarga X, TikTok, Instagram y Reddit',
+                'description' => 'Descarga videos, fotos, reels, historias y galerías de publicaciones públicas de X/Twitter, TikTok, Instagram y Reddit. Rápido, gratis, sin registro.',
             ],
         ],
     ],
 
     // ── All-in-one (local) ───────────────────────────────────────────────────
     'universal-media-downloader.anselmidev.on' => [
-        'name'        => 'Social Media Downloader',
+        'name'        => 'Anselmi Media Downloader',
         'platforms'   => null,
         'placeholder' => 'https://x.com/username/status/...',
         'seo' => [
             'en' => [
-                'title'       => 'Free Video & Photo Downloader — X/Twitter, TikTok, Instagram, Reddit',
-                'description' => 'Download videos and photos from X (Twitter), TikTok, Instagram and Reddit for free. Paste any post URL to save media instantly. No watermark. No account needed.',
+                'title'       => 'Anselmi Media Downloader | Download X, TikTok, Instagram & Reddit Media',
+                'description' => 'Download videos, photos, reels, stories and galleries from public X/Twitter, TikTok, Instagram and Reddit posts. Fast, free, no sign-up.',
             ],
             'es' => [
-                'title'       => 'Descargador Gratis de Videos y Fotos — X/Twitter, TikTok, Instagram, Reddit',
-                'description' => 'Descarga videos y fotos de X (Twitter), TikTok, Instagram y Reddit gratis. Pega cualquier URL para guardar medios al instante. Sin marca de agua. Sin registro.',
+                'title'       => 'Anselmi Media Downloader | Descarga X, TikTok, Instagram y Reddit',
+                'description' => 'Descarga videos, fotos, reels, historias y galerías de publicaciones públicas de X/Twitter, TikTok, Instagram y Reddit. Rápido, gratis, sin registro.',
             ],
         ],
     ],
 
     // ── All-in-one (production domain) ───────────────────────────────────────
     'social-media.anselmidev.com' => [
-        'name'        => 'Social Media Downloader',
+        'name'        => 'Anselmi Media Downloader',
         'platforms'   => null,
         'placeholder' => 'https://x.com/username/status/...',
         'seo' => [
             'en' => [
-                'title'       => 'Free Video & Photo Downloader — X/Twitter, TikTok, Instagram, Reddit',
-                'description' => 'Download videos and photos from X (Twitter), TikTok, Instagram and Reddit for free. Paste any post URL to save media instantly. No watermark. No account needed.',
+                'title'       => 'Anselmi Media Downloader | Download X, TikTok, Instagram & Reddit Media',
+                'description' => 'Download videos, photos, reels, stories and galleries from public X/Twitter, TikTok, Instagram and Reddit posts. Fast, free, no sign-up.',
             ],
             'es' => [
-                'title'       => 'Descargador Gratis de Videos y Fotos — X/Twitter, TikTok, Instagram, Reddit',
-                'description' => 'Descarga videos y fotos de X (Twitter), TikTok, Instagram y Reddit gratis. Pega cualquier URL para guardar medios al instante. Sin marca de agua. Sin registro.',
+                'title'       => 'Anselmi Media Downloader | Descarga X, TikTok, Instagram y Reddit',
+                'description' => 'Descarga videos, fotos, reels, historias y galerías de publicaciones públicas de X/Twitter, TikTok, Instagram y Reddit. Rápido, gratis, sin registro.',
             ],
         ],
     ],

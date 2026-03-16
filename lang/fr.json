@@ -1,5 +1,5 @@
 {
-    "Download media from social posts": "Téléchargez vidéos, publications, stories, reels et photos depuis les réseaux sociaux",
+    "Download media from social posts": "Téléchargez des médias depuis X, TikTok, Instagram et Reddit",
     "Paste any post URL to extract and download every photo and video it contains. No sign-up. No limits.": "Collez n'importe quelle URL de publication pour extraire et télécharger chaque photo et vidéo. Sans inscription. Sans limite.",
     "media downloader": "téléchargeur de médias",
     "paste a post url": "collez une url de publication",
@@ -43,6 +43,7 @@
     "faq_a3": "Non. Pas d'inscription, pas de connexion, et aucune limite sur le nombre de publications à télécharger.",
     "faq_q4": "Quelles plateformes sont prises en charge ?",
     "faq_a4": "X (Twitter), TikTok, Instagram (publications, reels et carrousels) et Reddit (vidéos, images et galeries) sont pris en charge. YouTube Shorts arrive bientôt.",
+    "Download by platform": "Télécharger par plateforme",
     "features_heading": "Pourquoi utiliser ce téléchargeur ?",
     "feature_1_title": "Rapide et gratuit",
     "feature_1_desc": "Téléchargez vidéos, photos et audio depuis n'importe quelle publication publique instantanément, sans coût ni limite.",

@@ -29,6 +29,20 @@
         </div>
     </section>
 
+    {{-- Enlaces internos por plataforma (Google: páginas importantes alcanzables por enlaces) --}}
+    <section aria-labelledby="platforms-heading">
+        <h2 id="platforms-heading" class="text-xs text-neutral-500 uppercase tracking-widest mb-6">◇ {{ __('Download by platform') }}</h2>
+        <div class="flex flex-wrap gap-2">
+            <a href="{{ route('platform.show', [app()->getLocale(), 'x-twitter-video-downloader']) }}" class="inline-flex items-center gap-1.5 text-xs px-3 py-2 border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-600 rounded transition-colors">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.23H2.747l7.73-8.835L1.254 2.25H8.08l4.261 5.636zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                X / Twitter
+            </a>
+            <a href="{{ route('platform.show', [app()->getLocale(), 'tiktok-video-downloader']) }}" class="inline-flex items-center gap-1.5 text-xs px-3 py-2 border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-600 rounded transition-colors">TikTok</a>
+            <a href="{{ route('platform.show', [app()->getLocale(), 'instagram-downloader']) }}" class="inline-flex items-center gap-1.5 text-xs px-3 py-2 border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-600 rounded transition-colors">Instagram</a>
+            <a href="{{ route('platform.show', [app()->getLocale(), 'reddit-video-downloader']) }}" class="inline-flex items-center gap-1.5 text-xs px-3 py-2 border border-neutral-700 text-neutral-300 hover:text-white hover:border-neutral-600 rounded transition-colors">Reddit</a>
+        </div>
+    </section>
+
     {{-- FAQ --}}
     <section aria-labelledby="faq-heading">
         <h2 id="faq-heading" class="text-xs text-neutral-500 uppercase tracking-widest mb-6">◇ {{ $t('faq_heading') }}</h2>

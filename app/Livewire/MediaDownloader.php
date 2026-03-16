@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\DownloadRequest;
 use App\Services\MediaExtractor\MediaExtractorFactory;
+use App\Services\TelegramNotifier;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Throwable;
@@ -67,7 +68,7 @@ class MediaDownloader extends Component
     private function logRequest(string $status, ?string $errorMessage = null, ?int $itemsCount = null): void
     {
         try {
-            DownloadRequest::create([
+            $data = [
                 'url'           => $this->url,
                 'platform'      => $this->platform,
                 'status'        => $status,
@@ -76,7 +77,14 @@ class MediaDownloader extends Component
                 'ip_address'    => request()->ip(),
                 'user_agent'    => request()->userAgent(),
                 'site_host'     => request()->getHost(),
-            ]);
+            ];
+
+            DownloadRequest::create($data);
+
+            $notifier = app(TelegramNotifier::class);
+            if ($notifier->isConfigured()) {
+                $notifier->notifyDownloadRequest($data);
+            }
         } catch (Throwable) {
             // Silently ignore logging failures to not break the download flow
         }

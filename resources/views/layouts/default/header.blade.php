@@ -47,12 +47,12 @@
                     x-cloak
                     class="absolute right-0 top-full mt-1.5 py-1 min-w-[8rem] rounded-md border border-neutral-700 bg-[#111111] shadow-lg z-50"
                 >
-                    @foreach (config('app.locales', ['en' => 'English', 'es' => 'Español']) as $code => $name)
+                    @foreach (\Mcamara\LaravelLocalization\Facades\LaravelLocalization::getSupportedLocales() as $code => $locale)
                         <a
-                            href="{{ route('locale.switch', $code) }}"
+                            href="{{ \Mcamara\LaravelLocalization\Facades\LaravelLocalization::getLocalizedURL($code) }}"
                             class="block px-3 py-2 text-xs uppercase tracking-widest transition-colors {{ app()->getLocale() === $code ? 'text-white font-bold bg-neutral-800/50' : 'text-neutral-400 hover:text-white hover:bg-neutral-800/30' }}"
                         >
-                            {{ $name }}
+                            {{ $locale['native'] }}
                         </a>
                     @endforeach
                 </div>
