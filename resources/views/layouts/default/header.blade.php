@@ -4,9 +4,23 @@
             @include('partials.icons.platform-icon')
             {{ config('site.name', config('app.name', 'MediaGet')) }}
         </div>
-        <nav class="flex items-center gap-6 text-xs text-neutral-500 uppercase tracking-widest">
-            {{-- <span class="text-neutral-300">{{ __('Home') }}</span> --}}
-            {{-- <a href="#" class="hover:text-neutral-300 transition-colors">{{ __('About') }}</a> --}}
+        <nav class="flex items-center gap-4 sm:gap-6 text-xs text-neutral-500 uppercase tracking-widest">
+            @php
+                $platformKeyMap = ['Twitter' => 'twitter', 'Instagram' => 'instagram', 'TikTok' => 'tiktok', 'Reddit' => 'reddit', 'YouTube' => 'youtube'];
+                $enabledPlatforms = \App\Services\MediaExtractor\MediaExtractorFactory::enabledPlatforms();
+                $platformsConfig = config('app.social_media_platforms', []);
+            @endphp
+            @foreach ($enabledPlatforms as $platform)
+                @php
+                    $key = $platformKeyMap[$platform] ?? strtolower($platform);
+                    $cfg = $platformsConfig[$key] ?? null;
+                    $url = $cfg['url'] ?? null;
+                @endphp
+                @if ($url)
+                    <a href="{{ $url }}" target="_blank" rel="noopener noreferrer" class="hover:text-neutral-300 transition-colors">{{ $cfg['name'] ?? $platform }}</a>
+                @endif
+            @endforeach
+
             <div
                 x-data="{ open: false }"
                 @click.outside="open = false"

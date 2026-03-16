@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\DownloadRequest;
 use App\Services\MediaExtractor\MediaExtractorFactory;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
@@ -36,6 +37,7 @@ class MediaDownloader extends Component
             $items = $extractor->extract($this->url);
 
             if (empty($items)) {
+                $this->logRequest(DownloadRequest::STATUS_NO_MEDIA, __('No media found in this post. The post may not contain any images or videos.'));
                 $this->error = __('No media found in this post. The post may not contain any images or videos.');
 
                 return;
@@ -43,6 +45,8 @@ class MediaDownloader extends Component
 
             // Convert DTOs to plain arrays for Livewire serialization
             $this->mediaItems = array_map(fn ($item) => $item->toArray(), $items);
+
+            $this->logRequest(DownloadRequest::STATUS_SUCCESS, null, count($this->mediaItems));
 
             // Notify the browser so Alpine can persist this entry to the history
             $this->dispatch('download-success',
@@ -55,7 +59,26 @@ class MediaDownloader extends Component
 
             $this->url = '';
         } catch (Throwable $e) {
+            $this->logRequest(DownloadRequest::STATUS_ERROR, $e->getMessage());
             $this->error = $e->getMessage();
+        }
+    }
+
+    private function logRequest(string $status, ?string $errorMessage = null, ?int $itemsCount = null): void
+    {
+        try {
+            DownloadRequest::create([
+                'url'           => $this->url,
+                'platform'      => $this->platform,
+                'status'        => $status,
+                'error_message' => $errorMessage,
+                'items_count'   => $itemsCount,
+                'ip_address'    => request()->ip(),
+                'user_agent'    => request()->userAgent(),
+                'site_host'     => request()->getHost(),
+            ]);
+        } catch (Throwable) {
+            // Silently ignore logging failures to not break the download flow
         }
     }
 

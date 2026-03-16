@@ -90,6 +90,29 @@ return [
         'pt' => 'Português',
     ],
 
+    'social_media_platforms' => [
+        'twitter' => [
+            'name' => 'Twitter',
+            'url' => env('TWITTER_URL')
+        ],
+        'tiktok' => [
+            'name' => 'TikTok',
+            'url' => env('TIKTOK_URL')
+        ],
+        'instagram' => [
+            'name' => 'Instagram',
+            'url' => env('INSTAGRAM_URL')
+        ],
+        'reddit' => [
+            'name' => 'Reddit',
+            'url' => env('REDDIT_URL')
+        ],
+        'youtube' => [
+            'name' => 'YouTube',
+            'url' => env('YOUTUBE_URL')
+        ],
+    ],
+
     'faker_locale' => env('APP_FAKER_LOCALE', 'en_US'),
 
     /*
