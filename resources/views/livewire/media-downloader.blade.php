@@ -14,11 +14,11 @@
         $heroDesc    = __("$social.description-home") !== "$social.description-home" ? __("$social.description-home") : __('Paste any post URL to extract and download every photo and video it contains. No sign-up. No limits.');
     @endphp
     <div class="space-y-5">
-        <div class="text-xs text-neutral-500 uppercase tracking-widest">◇ {{ $heroLabel }}</div>
-        <h1 class="text-3xl sm:text-4xl font-bold text-white leading-tight tracking-tight">
+        <div class="text-xs text-[#646464] uppercase tracking-widest">◇ {{ $heroLabel }}</div>
+        <h1 class="text-3xl sm:text-4xl font-bold text-[#2E203B] leading-tight tracking-tight">
             {{ $heroTitle }}
         </h1>
-        <p class="text-neutral-400 text-sm leading-relaxed max-w-lg">
+        <p class="text-[#646464] text-sm leading-relaxed max-w-lg">
             {{ $heroDesc }}
         </p>
 
@@ -26,7 +26,7 @@
         @php $enabledPlatforms = \App\Services\MediaExtractor\MediaExtractorFactory::enabledPlatforms(); @endphp
         <div class="flex flex-wrap gap-2 pt-1">
             @if(in_array('Twitter', $enabledPlatforms))
-            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 border border-neutral-700 text-neutral-300 rounded">
+            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] rounded-xl">
                 <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.23H2.747l7.73-8.835L1.254 2.25H8.08l4.261 5.636zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
@@ -34,27 +34,27 @@
             </span>
             @endif
             @if(in_array('TikTok', $enabledPlatforms))
-            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 border border-neutral-700 text-neutral-300 rounded">TikTok</span>
+            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] rounded-xl">TikTok</span>
             @endif
             @if(in_array('Instagram', $enabledPlatforms))
-            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 border border-neutral-700 text-neutral-300 rounded">{{ __('Instagram — soon') }}</span>
+            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] rounded-xl">{{ __('Instagram — soon') }}</span>
             @endif
             @if(in_array('Reddit', $enabledPlatforms))
-            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1 border border-neutral-700 text-neutral-300 rounded">{{ __('Reddit — soon') }}</span>
+            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] rounded-xl">{{ __('Reddit — soon') }}</span>
             @endif
         </div>
     </div>
 
     {{-- Input panel --}}
-    <div class="border border-neutral-800 rounded-lg overflow-hidden bg-[#111111]">
+    <div class="border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-sm">
         {{-- Panel header --}}
-        <div class="flex items-center gap-2 px-4 py-2.5 border-b border-neutral-800 bg-[#0f0f0f]">
+        <div class="flex items-center gap-2 px-4 py-2.5 border-b border-zinc-100 bg-[#F2EEE6]">
             <div class="flex gap-1.5">
-                <span class="w-2.5 h-2.5 rounded-full bg-neutral-700"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-neutral-700"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-neutral-700"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#BB89E2]/60"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-[#F9B646]/60"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-zinc-400"></span>
             </div>
-            <span class="text-xs text-neutral-600 ml-1">{{ __('paste a post url') }}</span>
+            <span class="text-xs text-[#646464] ml-1">{{ __('paste a post url') }}</span>
         </div>
 
         {{-- Form --}}
@@ -63,14 +63,14 @@
                 x-data="umdPasteBtn()"
                 class="flex-1 relative"
             >
-                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-neutral-600 text-sm select-none pointer-events-none">›</span>
+                <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#646464] text-sm select-none pointer-events-none">›</span>
                 <input
                     wire:model="url"
                     type="url"
                     x-ref="urlInput"
                     data-umd-url-input
                     placeholder="{{ config('site.placeholder', 'https://x.com/username/status/...') }}"
-                    class="w-full h-11 pl-8 pr-28 bg-[#0a0a0a] border border-neutral-700 rounded text-sm text-white placeholder-neutral-600 focus:outline-none focus:border-neutral-400 transition-colors font-[inherit]"
+                    class="w-full h-11 pl-8 pr-28 bg-[#F9F6F1] border border-zinc-200 rounded-xl text-sm text-[#2E203B] placeholder-[#646464]/60 focus:outline-none focus:ring-2 focus:ring-[#F9B646]/50 focus:border-[#F9B646] transition-colors font-[inherit]"
                     autocomplete="off"
                     autofocus
                 >
@@ -80,9 +80,9 @@
                     @click="paste()"
                     class="absolute right-2 top-1/2 -translate-y-1/2 h-7 px-2.5 rounded text-[11px] font-bold transition-all"
                     :class="{
-                        'bg-neutral-700 text-neutral-300 hover:bg-neutral-600': !pasted && !denied,
-                        'bg-green-900/60 text-green-400 border border-green-800': pasted,
-                        'bg-red-900/60 text-red-400 border border-red-800': denied
+                        'bg-[#F0F0F0] text-[#2E203B] hover:bg-zinc-200': !pasted && !denied,
+                        'bg-green-100 text-green-700 border border-green-200': pasted,
+                        'bg-red-100 text-red-600 border border-red-200': denied
                     }"
                 >
                     <span x-show="!pasted && !denied" class="flex items-center gap-1">
@@ -100,7 +100,7 @@
             <button
                 type="submit"
                 wire:loading.attr="disabled"
-                class="h-11 px-6 rounded bg-white text-black text-sm font-bold hover:bg-neutral-200 active:bg-neutral-300 transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 sm:w-auto w-full"
+                class="h-11 px-6 rounded-xl bg-[#F9B646] text-[#2E203B] text-sm font-bold hover:bg-[#f5a82e] active:bg-[#e99a28] transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shrink-0 sm:w-auto w-full shadow-sm"
             >
                 <span wire:loading.remove wire:target="download">{{ __('download') }}</span>
                 <span wire:loading wire:target="download">
@@ -117,7 +117,7 @@
 
         {{-- Inline validation error --}}
         @error('url')
-            <div class="px-5 pb-4 text-xs text-red-400 flex items-center gap-2">
+            <div class="px-5 pb-4 text-xs text-red-600 flex items-center gap-2">
                 <span class="text-red-500">✕</span> {{ $message }}
             </div>
         @enderror
@@ -126,25 +126,25 @@
     {{-- History --}}
     <div x-show="history.length > 0" x-cloak class="space-y-3">
         <div class="flex items-center justify-between">
-            <span class="text-xs text-neutral-500 uppercase tracking-widest">◇ {{ __('history') }}</span>
+            <span class="text-xs text-[#646464] uppercase tracking-widest">◇ {{ __('history') }}</span>
             <button
                 type="button"
                 @click="clear()"
-                class="text-[11px] text-neutral-600 hover:text-neutral-400 transition-colors"
+                class="text-[11px] text-[#646464] hover:text-[#2E203B] transition-colors"
             >{{ __('history_clear') }}</button>
         </div>
 
         <div class="space-y-1.5">
             <template x-for="(entry, i) in history" :key="entry.url + i">
-                <div class="flex items-center gap-2.5 group px-3 py-2 border border-neutral-800 rounded hover:border-neutral-700 transition-colors bg-[#111111]">
+                <div class="flex items-center gap-2.5 group px-3 py-2 border border-zinc-200 rounded-xl hover:border-zinc-300 transition-colors bg-white shadow-sm">
 
                     {{-- Thumbnail (if available) --}}
-                    <div class="shrink-0 w-8 h-8 rounded overflow-hidden bg-neutral-900 border border-neutral-800">
+                    <div class="shrink-0 w-8 h-8 rounded-lg overflow-hidden bg-[#F2EEE6] border border-zinc-100">
                         <template x-if="entry.thumb">
                             <img :src="entry.thumb" class="w-full h-full object-cover opacity-70" loading="lazy">
                         </template>
                         <template x-if="!entry.thumb">
-                            <div class="w-full h-full flex items-center justify-center text-neutral-700 text-[10px] font-mono" x-text="(entry.platform || '?').charAt(0)"></div>
+                            <div class="w-full h-full flex items-center justify-center text-[#646464] text-[10px] font-mono" x-text="(entry.platform || '?').charAt(0)"></div>
                         </template>
                     </div>
 
@@ -155,18 +155,18 @@
                         class="flex-1 text-left min-w-0 group/btn"
                         :title="entry.url"
                     >
-                        <div class="text-xs text-neutral-300 group-hover/btn:text-white transition-colors truncate leading-tight" x-text="entry.label || entry.url"></div>
+                        <div class="text-xs text-[#646464] group-hover/btn:text-[#2E203B] transition-colors truncate leading-tight" x-text="entry.label || entry.url"></div>
                         <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="text-[10px] text-neutral-600 font-mono" x-text="entry.platform"></span>
+                            <span class="text-[10px] text-[#646464]/80 font-mono" x-text="entry.platform"></span>
                             <template x-if="entry.count > 1">
-                                <span class="text-[10px] text-neutral-700">· <span x-text="entry.count"></span> items</span>
+                                <span class="text-[10px] text-[#646464]/70">· <span x-text="entry.count"></span> items</span>
                             </template>
                         </div>
                     </button>
 
                     {{-- Timestamp --}}
                     <span
-                        class="shrink-0 text-[10px] text-neutral-700 tabular-nums hidden sm:block"
+                        class="shrink-0 text-[10px] text-[#646464]/70 tabular-nums hidden sm:block"
                         x-text="timeAgo(entry.ts)"
                     ></span>
 
@@ -174,7 +174,7 @@
                     <button
                         type="button"
                         @click.stop="remove(entry.url)"
-                        class="shrink-0 w-5 h-5 flex items-center justify-center text-neutral-700 hover:text-neutral-300 transition-colors opacity-0 group-hover:opacity-100 rounded hover:bg-neutral-800 text-xs leading-none"
+                        class="shrink-0 w-5 h-5 flex items-center justify-center text-[#646464] hover:text-[#2E203B] transition-colors opacity-0 group-hover:opacity-100 rounded hover:bg-[#F2EAF6] text-xs leading-none"
                         title="{{ __('history_remove') }}"
                     >✕</button>
                 </div>
@@ -189,12 +189,12 @@
             x-transition:enter="transition ease-out duration-150"
             x-transition:enter-start="opacity-0"
             x-transition:enter-end="opacity-100"
-            class="border border-red-900/60 rounded-lg bg-red-950/30 p-4 flex gap-3"
+            class="border border-red-200 rounded-xl bg-red-50 p-4 flex gap-3"
         >
             <span class="text-red-500 shrink-0 text-sm">✕</span>
             <div class="space-y-0.5">
-                <p class="text-sm text-red-300 font-bold">{{ __('error') }}</p>
-                <p class="text-xs text-red-400/80 leading-relaxed">{{ $error }}</p>
+                <p class="text-sm text-red-700 font-bold">{{ __('error') }}</p>
+                <p class="text-xs text-red-600/90 leading-relaxed">{{ $error }}</p>
             </div>
         </div>
     @endif
@@ -210,10 +210,10 @@
         >
             {{-- Results panel header --}}
             <div class="flex items-center justify-between">
-                <div class="text-xs text-neutral-500 uppercase tracking-widest">
+                <div class="text-xs text-[#646464] uppercase tracking-widest">
                     ◇ {{ __('results') }}
                 </div>
-                <div class="flex items-center gap-3 text-xs text-neutral-500">
+                <div class="flex items-center gap-3 text-xs text-[#646464]">
                     @if ($platform)
                         <span class="flex items-center gap-1.5">
                             <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
@@ -221,7 +221,7 @@
                             </svg>
                             {{ $platform }}
                         </span>
-                        <span class="text-neutral-700">·</span>
+                        <span class="text-[#646464]/70">·</span>
                     @endif
                     <span>{{ count($mediaItems) }} {{ count($mediaItems) === 1 ? __('item') : __('items') }}</span>
                 </div>
@@ -230,11 +230,11 @@
             {{-- Media grid --}}
             <div class="{{ count($mediaItems) === 1 ? 'max-w-xs' : 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3' }}">
                 @foreach ($mediaItems as $index => $item)
-                    <div class="border border-neutral-800 rounded-lg overflow-hidden bg-[#111111]">
+                    <div class="border border-zinc-200 rounded-2xl overflow-hidden bg-white shadow-sm">
 
                         {{-- Thumbnail --}}
                         @if ($item['type'] === 'video')
-                            <div class="relative bg-neutral-900 aspect-video">
+                            <div class="relative bg-[#F2EEE6] aspect-video">
                                 @if ($item['thumbnailUrl'])
                                     <img
                                         src="{{ $item['thumbnailUrl'] }}"
@@ -244,20 +244,20 @@
                                     >
                                 @endif
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <div class="w-12 h-12 rounded-full border border-neutral-500 bg-black/70 flex items-center justify-center backdrop-blur-sm">
+                                    <div class="w-12 h-12 rounded-full border-2 border-[#2E203B]/30 bg-[#2E203B]/80 flex items-center justify-center backdrop-blur-sm">
                                         <svg class="w-5 h-5 text-white ml-0.5" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M8 5v14l11-7z"/>
                                         </svg>
                                     </div>
                                 </div>
                                 @if ($item['quality'])
-                                    <span class="absolute top-2.5 right-2.5 text-[10px] px-1.5 py-0.5 bg-black/80 text-neutral-400 border border-neutral-700 rounded font-mono">
+                                    <span class="absolute top-2.5 right-2.5 text-[10px] px-1.5 py-0.5 bg-white/90 text-[#646464] border border-zinc-200 rounded-lg font-mono shadow-sm">
                                         {{ $item['quality'] }}
                                     </span>
                                 @endif
                             </div>
                         @elseif ($item['type'] === 'audio')
-                            <div class="relative bg-neutral-900 aspect-video">
+                            <div class="relative bg-[#F2EEE6] aspect-video">
                                 @if ($item['thumbnailUrl'])
                                     <img
                                         src="{{ $item['thumbnailUrl'] }}"
@@ -267,20 +267,20 @@
                                     >
                                 @endif
                                 <div class="absolute inset-0 flex items-center justify-center">
-                                    <div class="w-12 h-12 rounded-full border border-neutral-500 bg-black/70 flex items-center justify-center backdrop-blur-sm">
+                                    <div class="w-12 h-12 rounded-full border-2 border-[#2E203B]/30 bg-[#2E203B]/80 flex items-center justify-center backdrop-blur-sm">
                                         <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
                                             <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
                                         </svg>
                                     </div>
                                 </div>
                                 @if ($item['quality'])
-                                    <span class="absolute top-2.5 right-2.5 text-[10px] px-1.5 py-0.5 bg-black/80 text-neutral-400 border border-neutral-700 rounded font-mono">
+                                    <span class="absolute top-2.5 right-2.5 text-[10px] px-1.5 py-0.5 bg-white/90 text-[#646464] border border-zinc-200 rounded-lg font-mono shadow-sm">
                                         {{ $item['quality'] }}
                                     </span>
                                 @endif
                             </div>
                         @else
-                            <div class="aspect-video bg-neutral-900 overflow-hidden">
+                            <div class="aspect-video bg-[#F2EEE6] overflow-hidden">
                                 <img
                                     src="{{ $item['thumbnailUrl'] ?? $item['url'] }}"
                                     alt="Image {{ $index + 1 }}"
@@ -291,8 +291,8 @@
                         @endif
 
                         {{-- File meta + download --}}
-                        <div class="p-3 flex items-center justify-between gap-3 border-t border-neutral-800">
-                            <span class="text-xs text-neutral-500">
+                        <div class="p-3 flex items-center justify-between gap-3 border-t border-zinc-100">
+                            <span class="text-xs text-[#646464]">
                                 @if ($item['type'] === 'video')
                                     ▶ {{ __('video') }}
                                 @elseif ($item['type'] === 'audio')
@@ -304,7 +304,7 @@
                             </span>
                             <a
                                 href="{{ route('download.proxy', ['url' => $item['url'], 'filename' => $item['filename'] ?? 'media-'.($index + 1)]) }}"
-                                class="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-white text-black font-bold rounded hover:bg-neutral-200 active:bg-neutral-300 transition-colors"
+                                class="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-[#F9B646] text-[#2E203B] font-bold rounded-xl hover:bg-[#f5a82e] active:bg-[#e99a28] transition-colors shadow-sm"
                             >
                                 <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
@@ -319,8 +319,8 @@
             </div>
         </div>
     @elseif ($hasSearched && !$error)
-        <div class="border border-neutral-800 rounded-lg p-8 text-center">
-            <p class="text-xs text-neutral-600">◇ {{ __('no media found in this post') }}</p>
+        <div class="border border-zinc-200 rounded-2xl p-8 text-center bg-white shadow-sm">
+            <p class="text-xs text-[#646464]">◇ {{ __('no media found in this post') }}</p>
         </div>
     @endif
 

@@ -9,8 +9,21 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-    --font-sans: 'Space Mono', ui-monospace, monospace;
+    --font-sans: 'Poppins', ui-sans-serif, system-ui, sans-serif;
     --font-mono: 'Space Mono', ui-monospace, monospace;
+
+    /* Paleta cálida y suave (inspirada en diseño moderno) */
+    --color-cream: #F9F6F1;
+    --color-cream-50: #F9F6F1;
+    --color-cream-100: #F2EEE6;
+    --color-cream-200: #F2EAF6;
+    --color-heading: #2E203B;
+    --color-body: #646464;
+    --color-tags-bg: #F0F0F0;
+    --color-primary: #F9B646;
+    --color-primary-hover: #f5a82e;
+    --color-secondary: #BB89E2;
+    --color-secondary-hover: #a86fd6;
 
     --color-zinc-50: #fafafa;
     --color-zinc-100: #f5f5f5;
@@ -24,9 +37,9 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
-    --color-accent-foreground: var(--color-white);
+    --color-accent: #F9B646;
+    --color-accent-content: #2E203B;
+    --color-accent-foreground: #2E203B;
 }
 
 @layer theme {
@@ -44,7 +57,7 @@
     ::before,
     ::backdrop,
     ::file-selector-button {
-        border-color: var(--color-gray-200, currentColor);
+        border-color: var(--color-zinc-200, currentColor);
     }
 
     [x-cloak] { display: none !important; }

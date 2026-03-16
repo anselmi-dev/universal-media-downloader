@@ -51,7 +51,7 @@
     {{-- Favicons (Google recomienda link rel="icon" para elegibilidad del favicon en búsqueda) --}}
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <meta name="theme-color" content="#0a0a0a">
+    <meta name="theme-color" content="#F9F6F1">
 
     {{-- JSON-LD --}}
     @php
@@ -108,16 +108,16 @@
     <script type="application/ld+json">{!! json_encode($schemaFaq, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=space-mono:400,700" rel="stylesheet">
+    <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700|space-mono:400,700" rel="stylesheet">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
 
     <style>
-        body { font-family: 'Space Mono', ui-monospace, monospace; }
+        body { font-family: 'Poppins', ui-sans-serif, system-ui, sans-serif; }
     </style>
 </head>
-<body class="min-h-screen bg-[#0a0a0a] text-neutral-200 flex flex-col">
+<body class="min-h-screen bg-[#F9F6F1] text-[#2E203B] flex flex-col">
 
     @include('layouts.default.header')
 
