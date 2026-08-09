@@ -65,6 +65,7 @@
 
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon.svg?v=2026" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
     <meta name="theme-color" content="#F9F6F1">
 
     {{-- JSON-LD --}}

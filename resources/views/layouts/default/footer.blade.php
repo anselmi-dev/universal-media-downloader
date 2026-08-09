@@ -4,13 +4,13 @@
             © {{ date('Y') }} {{ config('app.name', 'mediaget') }}
         </span>
         <nav class="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#646464]" aria-label="{{ __('Download by platform') }}">
-            <a href="{{ route('platform.show', [app()->getLocale(), 'x-twitter-video-downloader']) }}" class="hover:text-[#2E203B] transition-colors">X / Twitter</a>
+            <a href="{{ route('platform.show', [app()->getLocale(), 'x-twitter-video-downloader']) }}" class="hover:text-[#2E203B] transition-colors">{{ __('X video downloader') }}</a>
             <span aria-hidden="true">·</span>
-            <a href="{{ route('platform.show', [app()->getLocale(), 'tiktok-video-downloader']) }}" class="hover:text-[#2E203B] transition-colors">TikTok</a>
+            <a href="{{ route('platform.show', [app()->getLocale(), 'tiktok-video-downloader']) }}" class="hover:text-[#2E203B] transition-colors">{{ __('TikTok video downloader') }}</a>
             <span aria-hidden="true">·</span>
-            <a href="{{ route('platform.show', [app()->getLocale(), 'instagram-downloader']) }}" class="hover:text-[#2E203B] transition-colors">Instagram</a>
+            <a href="{{ route('platform.show', [app()->getLocale(), 'instagram-downloader']) }}" class="hover:text-[#2E203B] transition-colors">{{ __('Instagram downloader') }}</a>
             <span aria-hidden="true">·</span>
-            <a href="{{ route('platform.show', [app()->getLocale(), 'reddit-video-downloader']) }}" class="hover:text-[#2E203B] transition-colors">Reddit</a>
+            <a href="{{ route('platform.show', [app()->getLocale(), 'reddit-video-downloader']) }}" class="hover:text-[#2E203B] transition-colors">{{ __('Reddit video downloader') }}</a>
         </nav>
     </div>
 </footer>

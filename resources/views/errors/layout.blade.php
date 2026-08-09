@@ -13,6 +13,7 @@
     <title>@yield('title') — {{ $siteName }}</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" href="/favicon.svg?v=2026" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
     <meta name="theme-color" content="#F9F6F1">
     @php
         $fontCss = 'https://fonts.bunny.net/css?family=poppins:400,600,700|space-mono:400&display=swap';

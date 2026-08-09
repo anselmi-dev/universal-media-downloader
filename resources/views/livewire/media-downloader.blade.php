@@ -34,17 +34,17 @@
                 <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.23H2.747l7.73-8.835L1.254 2.25H8.08l4.261 5.636zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
-                X / Twitter
+                X
             </a>
             @endif
             @if(in_array('TikTok', $enabledPlatforms))
             <a href="{{ route('platform.show', [$locale, 'tiktok-video-downloader']) }}" class="{{ $chipClass }}">TikTok</a>
             @endif
             @if(in_array('Instagram', $enabledPlatforms))
-            <a href="{{ route('platform.show', [$locale, 'instagram-downloader']) }}" class="{{ $chipClass }}">{{ __('Instagram — soon') }}</a>
+            <a href="{{ route('platform.show', [$locale, 'instagram-downloader']) }}" class="{{ $chipClass }}">IG</a>
             @endif
             @if(in_array('Reddit', $enabledPlatforms))
-            <a href="{{ route('platform.show', [$locale, 'reddit-video-downloader']) }}" class="{{ $chipClass }}">{{ __('Reddit — soon') }}</a>
+            <a href="{{ route('platform.show', [$locale, 'reddit-video-downloader']) }}" class="{{ $chipClass }}">Reddit</a>
             @endif
         </div>
     </div>

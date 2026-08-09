@@ -1,21 +1,25 @@
 # Anselmi Media Downloader
 
-> Free online tool to download videos, photos, reels and galleries from public X/Twitter, TikTok, Instagram and Reddit posts. No account required.
+> Free online tool to download videos, photos, reels and galleries from public X/Twitter, TikTok, Instagram and Reddit posts. No account required. Paste a public post URL and save media instantly.
+
+Anselmi Media Downloader helps people save public social media content for personal use. Only public posts are supported. Media is fetched from platform CDNs; this site does not host copyrighted files. Available in English, Spanish, French, German and Portuguese.
 
 ## Main site
-- https://social-media.anselmidev.com/en/
-- https://social-media.anselmidev.com/es/
-- https://social-media.anselmidev.com/fr/
-- https://social-media.anselmidev.com/de/
-- https://social-media.anselmidev.com/pt/
+
+- [Home (English)](https://social-media.anselmidev.com/en/): Multi-platform media downloader landing page in English
+- [Home (Spanish)](https://social-media.anselmidev.com/es/): Página principal del descargador de medios en español
+- [Home (French)](https://social-media.anselmidev.com/fr/): Page d’accueil du téléchargeur de médias en français
+- [Home (German)](https://social-media.anselmidev.com/de/): Startseite des Media-Downloaders auf Deutsch
+- [Home (Portuguese)](https://social-media.anselmidev.com/pt/): Página inicial do baixador de mídia em português
 
 ## Platform pages
-- X / Twitter: https://social-media.anselmidev.com/en/x-twitter-video-downloader
-- TikTok (no watermark): https://social-media.anselmidev.com/en/tiktok-video-downloader
-- Instagram (Reels, photos, stories): https://social-media.anselmidev.com/en/instagram-downloader
-- Reddit (videos, GIFs, galleries): https://social-media.anselmidev.com/en/reddit-video-downloader
 
-## Notes
-- Only public posts are supported.
-- Media is fetched from platform CDNs; this site does not host copyrighted files.
-- Available languages: English, Spanish, French, German, Portuguese.
+- [X / Twitter video downloader](https://social-media.anselmidev.com/en/x-twitter-video-downloader): Download videos and photos from public X (Twitter) posts in MP4
+- [TikTok video downloader](https://social-media.anselmidev.com/en/tiktok-video-downloader): Download TikTok videos without watermark when available
+- [Instagram downloader](https://social-media.anselmidev.com/en/instagram-downloader): Save Instagram Reels, photos, carousels, stories and highlights
+- [Reddit video downloader](https://social-media.anselmidev.com/en/reddit-video-downloader): Download Reddit videos with audio, GIFs and gallery images
+
+## Optional
+
+- [Sitemap](https://social-media.anselmidev.com/sitemap.xml): XML sitemap of indexable pages
+- [Robots](https://social-media.anselmidev.com/robots.txt): Crawler rules for search engines
