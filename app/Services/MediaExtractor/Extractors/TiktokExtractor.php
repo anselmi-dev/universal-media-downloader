@@ -22,26 +22,26 @@ class TiktokExtractor implements ExtractorInterface
         $url = $this->resolveShortUrl($url);
         $videoId = $this->extractVideoId($url);
 
-        // 1. Aweme API (often empty since TikTok added signature checks)
+        // 1. yt-dlp first when available: official CDN with true 720p/1080p ladders
+        $items = $this->extractViaYtDlp($url);
+        if (! empty($items)) {
+            return $items;
+        }
+
+        // 2. Aweme API (often empty since TikTok added signature checks)
         $data = $this->fetchViaAwemeApi($videoId);
         if ($data !== null) {
             return $this->parseMediaItems($data);
         }
 
-        // 2. TikWM (third-party; may be down)
+        // 3. TikWM with HD request
         $items = $this->fetchViaTikWm($url);
         if (! empty($items)) {
             return $items;
         }
 
-        // 3. TikMate (third-party; no watermark)
+        // 4. TikMate (third-party; no watermark)
         $items = $this->fetchViaTikMate($url);
-        if (! empty($items)) {
-            return $items;
-        }
-
-        // 4. yt-dlp via mobile API hostname (webpage scrape is usually captcha-blocked)
-        $items = $this->extractViaYtDlp($url);
         if (! empty($items)) {
             return $items;
         }
@@ -199,22 +199,23 @@ class TiktokExtractor implements ExtractorInterface
 
     private function parseMediaItems(array $aweme): array
     {
-        $mediaItems = [];
         $videoInfo = $aweme['video'] ?? [];
-
         if (empty($videoInfo)) {
-            return $mediaItems;
+            return [];
         }
 
         $coverUrl = $this->getCoverUrl($videoInfo);
-        $videoUrl = $this->getBestVideoUrl($videoInfo);
+        $qualityUrls = $this->collectQualityUrls($videoInfo);
 
-        if ($videoUrl) {
+        $mediaItems = [];
+        foreach ($qualityUrls as $entry) {
             $mediaItems[] = new MediaItem(
-                url: $videoUrl,
+                url: $entry['url'],
                 type: 'video',
                 platform: $this->getPlatformName(),
                 thumbnailUrl: $coverUrl,
+                quality: $entry['quality'],
+                filename: $entry['filename'],
             );
         }
 
@@ -233,8 +234,88 @@ class TiktokExtractor implements ExtractorInterface
         return null;
     }
 
+    /**
+     * Collect distinct video URLs ordered from highest quality to lowest.
+     *
+     * @return list<array{url: string, quality: string, filename: string}>
+     */
+    private function collectQualityUrls(array $videoInfo): array
+    {
+        $byHeight = [];
+
+        foreach ($videoInfo['bitrateInfo'] ?? $videoInfo['bit_rate'] ?? [] as $info) {
+            $playAddr = $info['PlayAddr'] ?? $info['play_addr'] ?? [];
+            $urlList = $playAddr['UrlList'] ?? $playAddr['url_list'] ?? [];
+            $url = $urlList[0] ?? null;
+            if (! $url || ! $this->isValidVideoHost($url)) {
+                continue;
+            }
+
+            $height = (int) ($info['Height'] ?? $info['height'] ?? $playAddr['Height'] ?? $playAddr['height'] ?? 0);
+            $width = (int) ($info['Width'] ?? $info['width'] ?? $playAddr['Width'] ?? $playAddr['width'] ?? 0);
+            $quality = ($height > 0 && $width > 0) ? min($height, $width) : max($height, $width);
+
+            $gearName = (string) ($info['GearName'] ?? $info['gear_name'] ?? '');
+            if (preg_match('/(\d+)p/i', $gearName, $m)) {
+                $quality = (int) $m[1];
+            }
+
+            if ($quality <= 0) {
+                continue;
+            }
+
+            if (! isset($byHeight[$quality])) {
+                $byHeight[$quality] = $this->ensureHttps($url);
+            }
+        }
+
+        if (! empty($byHeight)) {
+            krsort($byHeight);
+            $items = [];
+            foreach ($byHeight as $quality => $url) {
+                $items[] = [
+                    'url' => $url,
+                    'quality' => $quality.'p',
+                    'filename' => 'tiktok-video-'.$quality.'p',
+                ];
+            }
+
+            return $items;
+        }
+
+        $fallbackUrl = $this->getBestVideoUrl($videoInfo);
+        if ($fallbackUrl === null) {
+            return [];
+        }
+
+        return [[
+            'url' => $fallbackUrl,
+            'quality' => __('tiktok_video_no_watermark'),
+            'filename' => 'tiktok-video',
+        ]];
+    }
+
     private function getBestVideoUrl(array $videoInfo): ?string
     {
+        // Prefer API/download addresses that usually carry the full-resolution file
+        foreach ([
+            $videoInfo['download_addr'] ?? null,
+            $videoInfo['downloadAddr'] ?? null,
+            $videoInfo['play_addr_bytevc1'] ?? null,
+            $videoInfo['play_addr_h264'] ?? null,
+            $videoInfo['play_addr'] ?? null,
+        ] as $playAddr) {
+            if (! is_array($playAddr)) {
+                continue;
+            }
+
+            $urlList = $playAddr['url_list'] ?? $playAddr['UrlList'] ?? [];
+            $url = $urlList[0] ?? null;
+            if ($url && $this->isValidVideoHost($url)) {
+                return $this->ensureHttps($url);
+            }
+        }
+
         // playAddr (web format) - can be object with src or array of {src}
         $playAddr = $videoInfo['playAddr'] ?? null;
         if ($playAddr !== null) {
@@ -246,51 +327,6 @@ class TiktokExtractor implements ExtractorInterface
                 if ($url && $this->isValidVideoHost($url)) {
                     return $this->ensureHttps($url);
                 }
-            }
-        }
-
-        // bitrateInfo (web format) - pick highest quality
-        $bitrateInfo = $videoInfo['bitrateInfo'] ?? [];
-        $bestUrl = null;
-        $bestWidth = 0;
-
-        foreach ($bitrateInfo as $info) {
-            $playAddr = $info['PlayAddr'] ?? [];
-            $urlList = $playAddr['UrlList'] ?? $playAddr['url_list'] ?? [];
-            $url = $urlList[0] ?? null;
-
-            if ($url && $this->isValidVideoHost($url)) {
-                $width = (int) ($info['Bitrate'] ?? $info['width'] ?? 0);
-                if ($width > $bestWidth) {
-                    $bestWidth = $width;
-                    $bestUrl = $url;
-                }
-            }
-        }
-
-        if ($bestUrl) {
-            return $this->ensureHttps($bestUrl);
-        }
-
-        // play_addr (API format)
-        $playAddr = $videoInfo['play_addr'] ?? $videoInfo['play_addr_h264'] ?? $videoInfo['play_addr_bytevc1'] ?? null;
-        if ($playAddr) {
-            $urlList = $playAddr['url_list'] ?? [];
-            $url = $urlList[0] ?? null;
-
-            if ($url && $this->isValidVideoHost($url)) {
-                return $this->ensureHttps($url);
-            }
-        }
-
-        // download_addr (fallback, may be watermarked)
-        $downloadAddr = $videoInfo['download_addr'] ?? $videoInfo['downloadAddr'] ?? null;
-        if ($downloadAddr) {
-            $urlList = $downloadAddr['url_list'] ?? $downloadAddr['UrlList'] ?? $downloadAddr['url_list'] ?? [];
-            $url = $urlList[0] ?? null;
-
-            if ($url && $this->isValidVideoHost($url)) {
-                return $this->ensureHttps($url);
             }
         }
 
@@ -325,10 +361,10 @@ class TiktokExtractor implements ExtractorInterface
      */
     private function fetchViaTikWm(string $url): array
     {
-        // GET like the official TikWM web client (https://www.tikwm.com/api/?url=...)
+        // hd=1 is required for TikWM to populate hdplay (true higher-quality stream)
         $response = Http::timeout(15)
             ->withHeaders(['User-Agent' => self::USER_AGENT])
-            ->get('https://www.tikwm.com/api/', ['url' => $url]);
+            ->get('https://www.tikwm.com/api/', ['url' => $url, 'hd' => 1]);
 
         if (! $response->successful()) {
             return [];
@@ -340,7 +376,7 @@ class TiktokExtractor implements ExtractorInterface
         }
 
         $video = $data['data'] ?? [];
-        $coverUrl = $video['cover'] ?? null;
+        $coverUrl = $video['cover'] ?? $video['origin_cover'] ?? null;
         $items = [];
 
         // Photo slider/carousel: images array
@@ -358,7 +394,6 @@ class TiktokExtractor implements ExtractorInterface
                     );
                 }
             }
-            // Audio de fondo (opcional para sliders)
             if (! empty($video['music'])) {
                 $items[] = new MediaItem(
                     url: $this->ensureHttps($video['music']),
@@ -373,19 +408,8 @@ class TiktokExtractor implements ExtractorInterface
             return $items;
         }
 
-        // Video: 1. Sin marca de agua, 2. HD, 3. Audio
-        if (! empty($video['play'])) {
-            $items[] = new MediaItem(
-                url: $this->ensureHttps($video['play']),
-                type: 'video',
-                platform: $this->getPlatformName(),
-                thumbnailUrl: $coverUrl,
-                quality: __('tiktok_video_no_watermark'),
-                filename: 'tiktok-video',
-            );
-        }
-
-        if (! empty($video['hdplay']) && $video['hdplay'] !== ($video['play'] ?? '')) {
+        // HD first so the best option is the default/top choice in the UI
+        if (! empty($video['hdplay'])) {
             $items[] = new MediaItem(
                 url: $this->ensureHttps($video['hdplay']),
                 type: 'video',
@@ -393,6 +417,17 @@ class TiktokExtractor implements ExtractorInterface
                 thumbnailUrl: $coverUrl,
                 quality: __('tiktok_video_hd'),
                 filename: 'tiktok-video-hd',
+            );
+        }
+
+        if (! empty($video['play']) && ($video['play'] !== ($video['hdplay'] ?? null))) {
+            $items[] = new MediaItem(
+                url: $this->ensureHttps($video['play']),
+                type: 'video',
+                platform: $this->getPlatformName(),
+                thumbnailUrl: $coverUrl,
+                quality: __('tiktok_video_no_watermark'),
+                filename: 'tiktok-video',
             );
         }
 
@@ -437,14 +472,6 @@ class TiktokExtractor implements ExtractorInterface
 
         return [
             new MediaItem(
-                url: $downloadBase,
-                type: 'video',
-                platform: $this->getPlatformName(),
-                thumbnailUrl: $coverUrl,
-                quality: __('tiktok_video_no_watermark'),
-                filename: 'tiktok-video',
-            ),
-            new MediaItem(
                 url: $downloadBase.'?hd=1',
                 type: 'video',
                 platform: $this->getPlatformName(),
@@ -452,11 +479,19 @@ class TiktokExtractor implements ExtractorInterface
                 quality: __('tiktok_video_hd'),
                 filename: 'tiktok-video-hd',
             ),
+            new MediaItem(
+                url: $downloadBase,
+                type: 'video',
+                platform: $this->getPlatformName(),
+                thumbnailUrl: $coverUrl,
+                quality: __('tiktok_video_no_watermark'),
+                filename: 'tiktok-video',
+            ),
         ];
     }
 
     /**
-     * Extract video URL via yt-dlp when native methods fail.
+     * Extract video URLs via yt-dlp (multiple resolutions when available).
      * Returns array of MediaItem or empty array if yt-dlp is not available or fails.
      */
     private function extractViaYtDlp(string $url): array
@@ -486,17 +521,17 @@ class TiktokExtractor implements ExtractorInterface
             return [];
         }
 
-        $videoUrl = $json['url'] ?? null;
-        if (empty($videoUrl) && ! empty($json['formats'])) {
-            $best = $this->pickBestFormat($json['formats']);
-            $videoUrl = $best['url'] ?? null;
+        $thumbnailUrl = $json['thumbnail'] ?? null;
+        $items = $this->mediaItemsFromYtDlpFormats($json['formats'] ?? [], $thumbnailUrl);
+
+        if (! empty($items)) {
+            return $items;
         }
 
+        $videoUrl = $json['url'] ?? null;
         if (empty($videoUrl) || ! $this->isValidVideoHost($videoUrl)) {
             return [];
         }
-
-        $thumbnailUrl = $json['thumbnail'] ?? null;
 
         return [
             new MediaItem(
@@ -504,10 +539,101 @@ class TiktokExtractor implements ExtractorInterface
                 type: 'video',
                 platform: $this->getPlatformName(),
                 thumbnailUrl: $thumbnailUrl,
-                quality: __('tiktok_video_no_watermark'),
+                quality: __('tiktok_video_hd'),
                 filename: 'tiktok-video',
             ),
         ];
+    }
+
+    /**
+     * Build one MediaItem per distinct quality tier, highest first.
+     * Prefers H.264 over H.265 at the same tier for broader playback support.
+     *
+     * @param  list<array<string, mixed>>  $formats
+     * @return list<MediaItem>
+     */
+    private function mediaItemsFromYtDlpFormats(array $formats, ?string $thumbnailUrl): array
+    {
+        $bestByQuality = [];
+
+        foreach ($formats as $format) {
+            $videoUrl = $format['url'] ?? null;
+            $quality = $this->ytDlpQualityLabel($format);
+            $vcodec = (string) ($format['vcodec'] ?? 'none');
+
+            if ($quality < 240 || $vcodec === 'none' || empty($videoUrl) || ! $this->isValidVideoHost($videoUrl)) {
+                continue;
+            }
+
+            $current = $bestByQuality[$quality] ?? null;
+            if ($current === null || $this->ytDlpFormatScore($format) > $this->ytDlpFormatScore($current)) {
+                $bestByQuality[$quality] = $format;
+            }
+        }
+
+        if (empty($bestByQuality)) {
+            return [];
+        }
+
+        krsort($bestByQuality);
+
+        $items = [];
+        foreach ($bestByQuality as $quality => $format) {
+            $items[] = new MediaItem(
+                url: $this->ensureHttps($format['url']),
+                type: 'video',
+                platform: $this->getPlatformName(),
+                thumbnailUrl: $thumbnailUrl,
+                quality: $quality.'p',
+                filename: 'tiktok-video-'.$quality.'p',
+            );
+        }
+
+        return $items;
+    }
+
+    /**
+     * Resolve a TikTok "Xp" label. Vertical videos often report height > width
+     * (e.g. 1920x1080 for 1080p), so prefer format_id / the shorter side.
+     *
+     * @param  array<string, mixed>  $format
+     */
+    private function ytDlpQualityLabel(array $format): int
+    {
+        $formatId = (string) ($format['format_id'] ?? '');
+        if (preg_match('/(\d+)p/i', $formatId, $m)) {
+            return (int) $m[1];
+        }
+
+        $height = (int) ($format['height'] ?? 0);
+        $width = (int) ($format['width'] ?? 0);
+
+        if ($height > 0 && $width > 0) {
+            return min($height, $width);
+        }
+
+        return max($height, $width);
+    }
+
+    /**
+     * @param  array<string, mixed>  $format
+     */
+    private function ytDlpFormatScore(array $format): int
+    {
+        $vcodec = strtolower((string) ($format['vcodec'] ?? ''));
+        $acodec = strtolower((string) ($format['acodec'] ?? 'none'));
+        $tbr = (int) ($format['tbr'] ?? $format['vbr'] ?? 0);
+
+        // Prefer progressive (video+audio) and H.264 for compatibility.
+        $score = $tbr;
+        if ($acodec !== 'none' && $acodec !== '') {
+            $score += 100000;
+        }
+        if (str_contains($vcodec, 'h264') || str_contains($vcodec, 'avc')) {
+            $score += 50000;
+        }
+
+        return $score;
     }
 
     private function findYtDlp(): ?string
@@ -526,25 +652,4 @@ class TiktokExtractor implements ExtractorInterface
         return null;
     }
 
-    private function pickBestFormat(array $formats): ?array
-    {
-        $videoFormats = array_filter($formats, fn ($f) => ($f['vcodec'] ?? 'none') !== 'none');
-        if (empty($videoFormats)) {
-            return $formats[0] ?? null;
-        }
-
-        usort($videoFormats, function ($a, $b) {
-            $heightA = (int) ($a['height'] ?? 0);
-            $heightB = (int) ($b['height'] ?? 0);
-            if ($heightA !== $heightB) {
-                return $heightB <=> $heightA;
-            }
-            $brA = (int) ($a['tbr'] ?? $a['vbr'] ?? 0);
-            $brB = (int) ($b['tbr'] ?? $b['vbr'] ?? 0);
-
-            return $brB <=> $brA;
-        });
-
-        return $videoFormats[0] ?? null;
-    }
 }
