@@ -1,0 +1,36 @@
+---
+description: Clean Code obligatorio — consultar guía en .cursor/docs/clean-code-in-laravel
+alwaysApply: true
+---
+
+# Clean Code en Laravel
+
+Al escribir, revisar o refactorizar código de este proyecto, **aplica siempre principios de clean code**.
+
+## Documentación de referencia
+
+La guía completa está en:
+
+**`.cursor/docs/clean-code-in-laravel/`**
+
+Empieza por:
+- `.cursor/docs/clean-code-in-laravel/README.md` — índice general
+- `.cursor/docs/clean-code-in-laravel/toc.md` — tabla de contenidos
+
+Consulta el capítulo concreto según la tarea (controllers, actions, models, form requests, jobs, testing, etc.).
+
+## Reglas mínimas (siempre)
+
+1. **Nombres claros**: clases, métodos y variables que expresen intención.
+2. **Controllers thin**: reciben request, delegan y responden. Sin lógica de negocio.
+3. **Lógica de negocio** en `Services/` (`handle()`) o `Actions/`, no en Livewire/Filament/Blade.
+4. **Validación** en Form Requests (o `#[Validate]` / rules de Livewire cuando aplique).
+5. **Modelos Eloquent**: relaciones, scopes, casts/accessors. Sin orquestación de casos de uso.
+6. **Métodos cortos y un propósito**: preferir composición sobre métodos largos.
+7. **Sin comentarios redundantes**: el código debe explicarse; documentar solo lo no obvio.
+8. **PSR-12 + tipado estricto** (`declare(strict_types=1)`); Pint antes de commit.
+
+## Cómo usarla
+
+- Antes de implementar un patrón nuevo (Action, DTO, Pipeline, Policy…), **lee el capítulo** correspondiente en `.cursor/docs/clean-code-in-laravel/`.
+- Si hay duda entre “rápido” y “limpio”, prioriza clean code alineado a la guía y a las convenciones del proyecto (`CLAUDE.md` / skill `laravel-stack`).

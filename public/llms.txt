@@ -1,0 +1,21 @@
+# Anselmi Media Downloader
+
+> Free online tool to download videos, photos, reels and galleries from public X/Twitter, TikTok, Instagram and Reddit posts. No account required.
+
+## Main site
+- https://social-media.anselmidev.com/en/
+- https://social-media.anselmidev.com/es/
+- https://social-media.anselmidev.com/fr/
+- https://social-media.anselmidev.com/de/
+- https://social-media.anselmidev.com/pt/
+
+## Platform pages
+- X / Twitter: https://social-media.anselmidev.com/en/x-twitter-video-downloader
+- TikTok (no watermark): https://social-media.anselmidev.com/en/tiktok-video-downloader
+- Instagram (Reels, photos, stories): https://social-media.anselmidev.com/en/instagram-downloader
+- Reddit (videos, GIFs, galleries): https://social-media.anselmidev.com/en/reddit-video-downloader
+
+## Notes
+- Only public posts are supported.
+- Media is fetched from platform CDNs; this site does not host copyrighted files.
+- Available languages: English, Spanish, French, German, Portuguese.

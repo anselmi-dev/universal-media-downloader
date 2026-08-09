@@ -11,7 +11,7 @@ class PlatformPageController extends Controller
      * Show a platform-specific landing page.
      * Overrides site config for this request so the home view renders platform content.
      */
-    public function show(Request $request, string $platformSlug): View
+    public function show(Request $request, string $locale, string $platformSlug): View
     {
         $pages = config('platform_pages', []);
         $config = $pages[$platformSlug] ?? null;

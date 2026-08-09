@@ -4,5 +4,27 @@ Disallow: /settings
 Disallow: /login
 Disallow: /register
 Disallow: /download
+Disallow: /en/dashboard
+Disallow: /es/dashboard
+Disallow: /fr/dashboard
+Disallow: /de/dashboard
+Disallow: /pt/dashboard
+Disallow: /en/settings
+Disallow: /es/settings
+Disallow: /fr/settings
+Disallow: /de/settings
+Disallow: /pt/settings
+Disallow: /en/login
+Disallow: /es/login
+Disallow: /fr/login
+Disallow: /de/login
+Disallow: /pt/login
+Disallow: /en/register
+Disallow: /es/register
+Disallow: /fr/register
+Disallow: /de/register
+Disallow: /pt/register
+Disallow: /admin
+Disallow: /livewire
 
 Sitemap: https://social-media.anselmidev.com/sitemap.xml

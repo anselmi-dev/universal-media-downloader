@@ -23,24 +23,28 @@
         </p>
 
         {{-- Supported platforms chips (filtered by current site) --}}
-        @php $enabledPlatforms = \App\Services\MediaExtractor\MediaExtractorFactory::enabledPlatforms(); @endphp
+        @php
+            $enabledPlatforms = \App\Services\MediaExtractor\MediaExtractorFactory::enabledPlatforms();
+            $locale = app()->getLocale();
+            $chipClass = 'inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] hover:bg-[#BB89E2]/20 rounded-xl transition-colors';
+        @endphp
         <div class="flex flex-wrap gap-2 pt-1">
             @if(in_array('Twitter', $enabledPlatforms))
-            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] rounded-xl">
-                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor">
+            <a href="{{ route('platform.show', [$locale, 'x-twitter-video-downloader']) }}" class="{{ $chipClass }}">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                     <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.23H2.747l7.73-8.835L1.254 2.25H8.08l4.261 5.636zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
                 X / Twitter
-            </span>
+            </a>
             @endif
             @if(in_array('TikTok', $enabledPlatforms))
-            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] rounded-xl">TikTok</span>
+            <a href="{{ route('platform.show', [$locale, 'tiktok-video-downloader']) }}" class="{{ $chipClass }}">TikTok</a>
             @endif
             @if(in_array('Instagram', $enabledPlatforms))
-            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] rounded-xl">{{ __('Instagram — soon') }}</span>
+            <a href="{{ route('platform.show', [$locale, 'instagram-downloader']) }}" class="{{ $chipClass }}">{{ __('Instagram — soon') }}</a>
             @endif
             @if(in_array('Reddit', $enabledPlatforms))
-            <span class="inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 bg-[#F0F0F0] text-[#2E203B] rounded-xl">{{ __('Reddit — soon') }}</span>
+            <a href="{{ route('platform.show', [$locale, 'reddit-video-downloader']) }}" class="{{ $chipClass }}">{{ __('Reddit — soon') }}</a>
             @endif
         </div>
     </div>
@@ -121,65 +125,6 @@
                 <span class="text-red-500">✕</span> {{ $message }}
             </div>
         @enderror
-    </div>
-
-    {{-- History --}}
-    <div x-show="history.length > 0" x-cloak class="space-y-3">
-        <div class="flex items-center justify-between">
-            <span class="text-xs text-[#646464] uppercase tracking-widest">◇ {{ __('history') }}</span>
-            <button
-                type="button"
-                @click="clear()"
-                class="text-[11px] text-[#646464] hover:text-[#2E203B] transition-colors"
-            >{{ __('history_clear') }}</button>
-        </div>
-
-        <div class="space-y-1.5">
-            <template x-for="(entry, i) in history" :key="entry.url + i">
-                <div class="flex items-center gap-2.5 group px-3 py-2 border border-zinc-200 rounded-xl hover:border-zinc-300 transition-colors bg-white shadow-sm">
-
-                    {{-- Thumbnail (if available) --}}
-                    <div class="shrink-0 w-8 h-8 rounded-lg overflow-hidden bg-[#F2EEE6] border border-zinc-100">
-                        <template x-if="entry.thumb">
-                            <img :src="entry.thumb" class="w-full h-full object-cover opacity-70" loading="lazy">
-                        </template>
-                        <template x-if="!entry.thumb">
-                            <div class="w-full h-full flex items-center justify-center text-[#646464] text-[10px] font-mono" x-text="(entry.platform || '?').charAt(0)"></div>
-                        </template>
-                    </div>
-
-                    {{-- Label + platform + count --}}
-                    <button
-                        type="button"
-                        @click="use(entry.url)"
-                        class="flex-1 text-left min-w-0 group/btn"
-                        :title="entry.url"
-                    >
-                        <div class="text-xs text-[#646464] group-hover/btn:text-[#2E203B] transition-colors truncate leading-tight" x-text="entry.label || entry.url"></div>
-                        <div class="flex items-center gap-1.5 mt-0.5">
-                            <span class="text-[10px] text-[#646464]/80 font-mono" x-text="entry.platform"></span>
-                            <template x-if="entry.count > 1">
-                                <span class="text-[10px] text-[#646464]/70">· <span x-text="entry.count"></span> items</span>
-                            </template>
-                        </div>
-                    </button>
-
-                    {{-- Timestamp --}}
-                    <span
-                        class="shrink-0 text-[10px] text-[#646464]/70 tabular-nums hidden sm:block"
-                        x-text="timeAgo(entry.ts)"
-                    ></span>
-
-                    {{-- Remove --}}
-                    <button
-                        type="button"
-                        @click.stop="remove(entry.url)"
-                        class="shrink-0 w-5 h-5 flex items-center justify-center text-[#646464] hover:text-[#2E203B] transition-colors opacity-0 group-hover:opacity-100 rounded hover:bg-[#F2EAF6] text-xs leading-none"
-                        title="{{ __('history_remove') }}"
-                    >✕</button>
-                </div>
-            </template>
-        </div>
     </div>
 
     {{-- Error state --}}
@@ -324,6 +269,82 @@
         </div>
     @endif
 
+    {{-- History --}}
+    <div x-show="history.length > 0" x-cloak class="space-y-3">
+        <div class="flex items-center justify-between">
+            <span class="text-xs text-[#646464] uppercase tracking-widest">◇ {{ __('history') }}</span>
+            <button
+                type="button"
+                @click="clear()"
+                class="text-[11px] text-[#646464] hover:text-[#2E203B] transition-colors"
+            >{{ __('history_clear') }}</button>
+        </div>
+
+        <div class="space-y-1.5">
+            <template x-for="(entry, i) in history" :key="entry.url + i">
+                <div class="flex items-center gap-2.5 group px-3 py-2 border border-zinc-200 rounded-xl hover:border-zinc-300 transition-colors bg-white shadow-sm">
+
+                    {{-- Thumbnail (if available) --}}
+                    <div class="shrink-0 w-8 h-8 rounded-lg overflow-hidden bg-[#F2EEE6] border border-zinc-100">
+                        <template x-if="entry.thumb">
+                            <img :src="entry.thumb" class="w-full h-full object-cover opacity-70" loading="lazy">
+                        </template>
+                        <template x-if="!entry.thumb">
+                            <div class="w-full h-full flex items-center justify-center text-[#646464] text-[10px] font-mono" x-text="(entry.platform || '?').charAt(0)"></div>
+                        </template>
+                    </div>
+
+                    {{-- Label + platform + count --}}
+                    <button
+                        type="button"
+                        @click="use(entry.url)"
+                        class="flex-1 text-left min-w-0 group/btn"
+                        :title="entry.url"
+                    >
+                        <div class="text-xs text-[#646464] group-hover/btn:text-[#2E203B] transition-colors truncate leading-tight" x-text="entry.label || entry.url"></div>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="text-[10px] text-[#646464]/80 font-mono" x-text="entry.platform"></span>
+                            <template x-if="entry.count > 1">
+                                <span class="text-[10px] text-[#646464]/70">· <span x-text="entry.count"></span> items</span>
+                            </template>
+                        </div>
+                    </button>
+
+                    {{-- Timestamp --}}
+                    <span
+                        class="shrink-0 text-[10px] text-[#646464]/70 tabular-nums hidden sm:block"
+                        x-text="timeAgo(entry.ts)"
+                    ></span>
+
+                    {{-- Download (re-fetch this post) --}}
+                    <button
+                        type="button"
+                        @click.stop="redownload(entry.url)"
+                        wire:loading.attr="disabled"
+                        wire:target="download"
+                        class="shrink-0 inline-flex items-center gap-1 text-[11px] px-2 py-1 bg-[#F9B646] text-[#2E203B] font-bold rounded-lg hover:bg-[#f5a82e] active:bg-[#e99a28] transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                        title="{{ __('download') }}"
+                    >
+                        <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <span class="hidden sm:inline">{{ __('download') }}</span>
+                    </button>
+
+                    {{-- Remove --}}
+                    <button
+                        type="button"
+                        @click.stop="remove(entry.url)"
+                        class="shrink-0 w-5 h-5 flex items-center justify-center text-[#646464] hover:text-[#2E203B] transition-colors opacity-0 group-hover:opacity-100 rounded hover:bg-[#F2EAF6] text-xs leading-none"
+                        title="{{ __('history_remove') }}"
+                    >✕</button>
+                </div>
+            </template>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -373,6 +394,23 @@ function umdHistory() {
             input.dispatchEvent(new Event('input', { bubbles: true }))
             input.focus()
             window.scrollTo({ top: 0, behavior: 'smooth' })
+        },
+
+        async redownload(url) {
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+
+            try {
+                if (this.$wire) {
+                    await this.$wire.set('url', url)
+                    await this.$wire.download()
+                    return
+                }
+            } catch {
+                // Fall through to form submit
+            }
+
+            this.use(url)
+            document.querySelector('form[wire\\:submit="download"]')?.requestSubmit()
         },
 
         timeAgo(ts) {

@@ -1,9 +1,9 @@
 <header class="border-b border-zinc-200/80 bg-[#F9F6F1]/95 backdrop-blur-sm">
     <div class="max-w-3xl mx-auto px-5 sm:px-0 h-14 flex items-center justify-between">
-        <div class="flex items-center gap-2 text-sm font-bold tracking-tight text-[#2E203B]">
+        <a href="{{ route('home', ['locale' => app()->getLocale()]) }}" class="flex items-center gap-2 text-sm font-bold tracking-tight text-[#2E203B] hover:opacity-80 transition-opacity">
             @include('partials.icons.platform-icon')
             {{ config('site.name', config('app.name', 'MediaGet')) }}
-        </div>
+        </a>
         <nav class="flex items-center gap-4 sm:gap-6 text-xs text-[#646464] uppercase tracking-widest">
             @php
                 $platformKeyMap = ['Twitter' => 'twitter', 'Instagram' => 'instagram', 'TikTok' => 'tiktok', 'Reddit' => 'reddit', 'YouTube' => 'youtube'];
