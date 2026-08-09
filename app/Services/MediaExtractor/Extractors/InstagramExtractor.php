@@ -1,43 +1,36 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services\MediaExtractor\Extractors;
 
 use App\DTOs\MediaItem;
 use App\Services\MediaExtractor\Contracts\ExtractorInterface;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 use InvalidArgumentException;
 use RuntimeException;
+use Throwable;
 
 class InstagramExtractor implements ExtractorInterface
 {
-    private const USER_AGENT_WEB = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+    private const USER_AGENT_WEB = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
     /**
      * Mobile app User-Agent accepted by Instagram's private API.
-     * Using the Android Instagram app signature.
      */
     private const USER_AGENT_APP = 'Instagram 195.0.0.31.123 Android (29/10; 480dpi; 1080x2032; HUAWEI; ANE-LX1; HWANE; en_US; 302733750)';
 
     private const IG_APP_ID = '936619743392459';
 
-    private const GRAPHQL_HEADERS = [
-        'Accept'             => '*/*',
-        'Accept-Language'    => 'en-US,en;q=0.5',
-        'Content-Type'       => 'application/x-www-form-urlencoded',
-        'X-FB-Friendly-Name' => 'PolarisPostActionLoadPostQueryQuery',
-        'X-CSRFToken'        => 'RVDUooU5MYsBbS1CNN3CzVAuEP8oHB52',
-        'X-IG-App-ID'        => '1217981644879628',
-        'X-FB-LSD'           => 'AVqbxe3J_YA',
-        'X-ASBD-ID'          => '129477',
-        'Sec-Fetch-Dest'     => 'empty',
-        'Sec-Fetch-Mode'     => 'cors',
-        'Sec-Fetch-Site'     => 'same-origin',
-        'User-Agent'         => 'Mozilla/5.0 (Linux; Android 11; SAMSUNG SM-G973U) AppleWebKit/537.36 (KHTML, like Gecko) SamsungBrowser/14.2 Chrome/87.0.4280.141 Mobile Safari/537.36',
-    ];
+    /** PolarisPostRootQuery – returns xdt_api__v1__media__shortcode__web_info */
+    private const DOC_ID = '27128499623469141';
 
-    /** doc_id for PolarisPostActionLoadPostQueryQuery – update when Instagram rotates it */
-    private const DOC_ID = '10015901848480474';
+    private const GRAPHQL_URL = 'https://www.instagram.com/graphql/query';
+
+    private bool $sessionRejected = false;
 
     // -------------------------------------------------------------------------
     // Public interface
@@ -46,11 +39,9 @@ class InstagramExtractor implements ExtractorInterface
     public function extract(string $url): array
     {
         $shortcode = $this->extractShortcode($url);
-        $isStory   = $this->isStoryUrl($url);
+        $isStory = $this->isStoryUrl($url);
         $sessionId = $this->getSessionId();
 
-        // 1. For stories/highlights: try Instagram's authenticated mobile API
-        //    (requires INSTAGRAM_SESSION_ID in .env)
         if ($isStory && $sessionId !== null) {
             $items = $this->isHighlightUrl($url)
                 ? $this->fetchHighlightItems($shortcode, $sessionId)
@@ -61,35 +52,47 @@ class InstagramExtractor implements ExtractorInterface
             }
         }
 
-        // 2. For posts/reels: try Instagram's internal GraphQL API (no auth needed)
         if (! $isStory) {
-            // 2a. With session for best results
-            if ($sessionId !== null) {
+            if ($sessionId !== null && ! $this->sessionRejected) {
+                $items = $this->fetchPostViaMobileApi($shortcode, $sessionId);
+                if (! empty($items)) {
+                    return $items;
+                }
+
                 $items = $this->fetchPostViaAuthApi($shortcode, $sessionId);
                 if (! empty($items)) {
                     return $items;
                 }
             }
 
-            // 2b. Anonymous GraphQL fallback
             $items = $this->fetchViaGraphQL($shortcode);
             if (! empty($items)) {
                 return $items;
             }
         }
 
-        // 3. yt-dlp universal fallback (handles all types, passes session if set)
-        $items = $this->extractViaYtDlp($url, $sessionId);
+        $items = $this->extractViaYtDlp($url, $this->sessionRejected ? null : $sessionId);
         if (! empty($items)) {
             return $items;
         }
 
-        // 4. Friendly error
+        if ($sessionId !== null && ! $this->sessionRejected) {
+            $items = $this->extractViaYtDlp($url, null);
+            if (! empty($items)) {
+                return $items;
+            }
+        }
+
         if ($isStory) {
             if ($sessionId === null) {
                 throw new RuntimeException(__('errors.instagram_story_no_session'));
             }
+
             throw new RuntimeException(__('errors.instagram_story_requires_auth'));
+        }
+
+        if ($sessionId !== null && $this->sessionRejected) {
+            throw new RuntimeException(__('errors.instagram_session_expired'));
         }
 
         throw new RuntimeException(__('errors.instagram_extract_failed'));
@@ -124,12 +127,6 @@ class InstagramExtractor implements ExtractorInterface
 
     /**
      * Extract the post shortcode or highlight/story ID from any IG URL.
-     *
-     * /p/{shortcode}/
-     * /reel/{shortcode}/
-     * /tv/{shortcode}/
-     * /stories/{username}/{media_id}/
-     * /stories/highlights/{highlight_id}/
      */
     private function extractShortcode(string $url): string
     {
@@ -156,81 +153,124 @@ class InstagramExtractor implements ExtractorInterface
             return null;
         }
 
-        // URL-decode in case the value was copied from the browser address bar
         return urldecode($id);
+    }
+
+    /**
+     * Convert an Instagram shortcode to its numeric media ID.
+     */
+    private function shortcodeToMediaId(string $code): string
+    {
+        $alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+        $id = '0';
+
+        for ($i = 0, $len = strlen($code); $i < $len; $i++) {
+            $pos = strpos($alphabet, $code[$i]);
+            if ($pos === false) {
+                throw new InvalidArgumentException(__('errors.instagram_invalid_url'));
+            }
+
+            $id = bcmul($id, '64');
+            $id = bcadd($id, (string) $pos);
+        }
+
+        return $id;
     }
 
     // -------------------------------------------------------------------------
     // Authenticated Instagram API (requires INSTAGRAM_SESSION_ID)
     // -------------------------------------------------------------------------
 
-    /**
-     * Fetch highlight items via Instagram's mobile API.
-     * Endpoint: GET i.instagram.com/api/v1/feed/reels_media/?reel_ids=highlight:{id}
-     */
     private function fetchHighlightItems(string $highlightId, string $sessionId): array
     {
-        $response = Http::timeout(15)
-            ->withHeaders($this->authHeaders($sessionId))
-            ->get('https://i.instagram.com/api/v1/feed/reels_media/', [
-                'reel_ids' => "highlight:{$highlightId}",
-            ]);
+        try {
+            $response = Http::timeout(15)
+                ->withHeaders($this->authHeaders($sessionId))
+                ->withOptions(['allow_redirects' => ['max' => 3]])
+                ->get('https://i.instagram.com/api/v1/feed/reels_media/', [
+                    'reel_ids' => "highlight:{$highlightId}",
+                ]);
+        } catch (Throwable) {
+            $this->sessionRejected = true;
+
+            return [];
+        }
+
+        if ($this->isSessionRejectedResponse($response)) {
+            return [];
+        }
 
         if (! $response->ok()) {
             return [];
         }
 
-        return $this->parseReelsMediaResponse($response->json());
+        return $this->parseReelsMediaResponse($response->json() ?? []);
     }
 
-    /**
-     * Fetch a specific story item using its media ID directly.
-     * Endpoint: GET i.instagram.com/api/v1/media/{mediaId}/info/
-     *
-     * The media ID is already in the story URL (no need to resolve userId first).
-     */
     private function fetchStoryItems(string $storyUrl, string $sessionId): array
     {
-        // Extract the numeric media ID from the URL: /stories/{username}/{mediaId}/
         if (! preg_match('#instagram\.com/stories/[\w.]+/([\d]+)#i', $storyUrl, $m)) {
             return [];
         }
 
-        $mediaId  = $m[1];
-        $response = Http::timeout(15)
-            ->withHeaders($this->authHeaders($sessionId))
-            ->get("https://i.instagram.com/api/v1/media/{$mediaId}/info/");
+        return $this->fetchMediaInfoItems($m[1], $sessionId, 'instagram-story');
+    }
+
+    /**
+     * Fetch a regular post/reel via the authenticated mobile API.
+     */
+    private function fetchPostViaMobileApi(string $shortcode, string $sessionId): array
+    {
+        try {
+            $mediaId = $this->shortcodeToMediaId($shortcode);
+        } catch (InvalidArgumentException) {
+            return [];
+        }
+
+        return $this->fetchMediaInfoItems($mediaId, $sessionId, 'instagram');
+    }
+
+    private function fetchMediaInfoItems(string $mediaId, string $sessionId, string $filenamePrefix): array
+    {
+        try {
+            $response = Http::timeout(15)
+                ->withHeaders($this->authHeaders($sessionId))
+                ->withOptions(['allow_redirects' => ['max' => 3]])
+                ->get("https://i.instagram.com/api/v1/media/{$mediaId}/info/");
+        } catch (Throwable) {
+            $this->sessionRejected = true;
+
+            return [];
+        }
+
+        if ($this->isSessionRejectedResponse($response)) {
+            return [];
+        }
 
         if (! $response->ok()) {
             return [];
         }
 
-        $json  = $response->json();
-        $items = $json['items'] ?? [];
+        $items = $response->json('items') ?? [];
+        if (! is_array($items) || $items === []) {
+            return [];
+        }
 
-        return array_values(array_filter(array_map(
-            fn ($item, $i) => $this->parseMobileApiItem($item, $i, count($items)),
-            $items,
-            array_keys($items),
-        )));
+        return $this->parseMobileApiItems($items, $filenamePrefix);
     }
 
-    /**
-     * Parse the response from /api/v1/feed/reels_media/ into MediaItem DTOs.
-     * Response shape: { reels: { "highlight:{id}": { items: [...] } } }
-     */
     private function parseReelsMediaResponse(array $json): array
     {
         $items = [];
 
         foreach ($json['reels'] ?? [] as $reel) {
-            $reel_items = $reel['items'] ?? [];
-            $total      = count($reel_items);
-            foreach ($reel_items as $i => $item) {
-                $parsed = $this->parseMobileApiItem($item, $i, $total);
-                if ($parsed) {
-                    $items[] = $parsed;
-                }
+            $reelItems = $reel['items'] ?? [];
+            if (! is_array($reelItems) || $reelItems === []) {
+                continue;
+            }
+
+            foreach ($this->parseMobileApiItems($reelItems, 'instagram-story') as $item) {
+                $items[] = $item;
             }
         }
 
@@ -238,87 +278,115 @@ class InstagramExtractor implements ExtractorInterface
     }
 
     /**
-     * Fetch a regular post/reel via the authenticated mobile API.
-     * Endpoint: GET i.instagram.com/api/v1/media/{shortcode}/info/
-     * (shortcode must be converted to numeric media ID first via GraphQL)
+     * Fetch a post/reel via authenticated GraphQL (PolarisPostRootQuery).
      */
     private function fetchPostViaAuthApi(string $shortcode, string $sessionId): array
     {
-        // Use the web API with session cookie for better success rate on public posts
-        $response = Http::timeout(12)
-            ->withHeaders(array_merge(self::GRAPHQL_HEADERS, [
-                'Cookie' => "sessionid={$sessionId}",
-            ]))
-            ->asForm()
-            ->post('https://www.instagram.com/api/graphql', $this->graphqlParams($shortcode));
-
-        if (! $response->ok()) {
-            return [];
-        }
-
-        $media = $response->json('data.xdt_shortcode_media');
-        if (empty($media)) {
-            return [];
-        }
-
-        return $this->parseGraphQLMedia($media);
+        return $this->requestGraphQL($shortcode, $sessionId);
     }
 
-    /**
-     * Build authenticated headers for Instagram's mobile API.
-     */
     private function authHeaders(string $sessionId): array
     {
         return [
-            'User-Agent'        => self::USER_AGENT_APP,
-            'X-IG-App-ID'       => self::IG_APP_ID,
-            'Accept-Language'   => 'en-US',
-            'Accept-Encoding'   => 'gzip, deflate',
-            'Cookie'            => "sessionid={$sessionId}; ig_did=UNKNOWN",
+            'User-Agent' => self::USER_AGENT_APP,
+            'X-IG-App-ID' => self::IG_APP_ID,
+            'Accept-Language' => 'en-US',
+            'Accept-Encoding' => 'gzip, deflate',
+            'Cookie' => "sessionid={$sessionId}; ig_did=UNKNOWN",
             'X-IG-Connection-Type' => 'WIFI',
         ];
     }
 
+    private function isSessionRejectedResponse(Response $response): bool
+    {
+        if (in_array($response->status(), [301, 302, 303, 307, 308], true)) {
+            $this->sessionRejected = true;
+
+            return true;
+        }
+
+        $message = (string) ($response->json('message') ?? '');
+        if ($response->status() === 403 || str_contains(strtolower($message), 'login_required')) {
+            $this->sessionRejected = true;
+
+            return true;
+        }
+
+        return false;
+    }
+
     /**
-     * Parse a single item from Instagram's mobile API response (story/highlight).
-     * Returns a MediaItem or null if nothing extractable.
+     * @param  list<array<string, mixed>>  $items
+     * @return list<MediaItem>
      */
-    private function parseMobileApiItem(array $item, int $index, int $total): ?MediaItem
+    private function parseMobileApiItems(array $items, string $filenamePrefix): array
+    {
+        $parsed = [];
+
+        foreach ($items as $index => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            // Carousel / sidecar
+            if ((int) ($item['media_type'] ?? 0) === 8 && ! empty($item['carousel_media'])) {
+                $carousel = $item['carousel_media'];
+                $total = count($carousel);
+                foreach ($carousel as $i => $slide) {
+                    if (! is_array($slide)) {
+                        continue;
+                    }
+                    $media = $this->parseMobileApiItem($slide, (int) $i, $total, $filenamePrefix);
+                    if ($media) {
+                        $parsed[] = $media;
+                    }
+                }
+
+                continue;
+            }
+
+            $media = $this->parseMobileApiItem($item, (int) $index, count($items), $filenamePrefix);
+            if ($media) {
+                $parsed[] = $media;
+            }
+        }
+
+        return $parsed;
+    }
+
+    private function parseMobileApiItem(array $item, int $index, int $total, string $filenamePrefix): ?MediaItem
     {
         $thumbnail = $item['image_versions2']['candidates'][0]['url'] ?? null;
-        $quality   = $total > 1 ? __('instagram_slide', ['n' => $index + 1, 'total' => $total]) : null;
+        $quality = $total > 1 ? __('instagram_slide', ['n' => $index + 1, 'total' => $total]) : null;
 
-        // Video story / highlight
-        if (! empty($item['video_versions'])) {
-            // Sort by bitrate/width descending
+        if (! empty($item['video_versions']) && is_array($item['video_versions'])) {
             $versions = $item['video_versions'];
             usort($versions, fn ($a, $b) => ($b['width'] ?? 0) <=> ($a['width'] ?? 0));
             $url = $versions[0]['url'] ?? null;
-            if ($url) {
+            if (is_string($url) && $url !== '') {
                 return new MediaItem(
                     url: $url,
                     type: 'video',
                     platform: $this->getPlatformName(),
-                    thumbnailUrl: $thumbnail,
+                    thumbnailUrl: is_string($thumbnail) ? $thumbnail : null,
                     quality: $quality,
-                    filename: 'instagram-story-'.($index + 1),
+                    filename: $filenamePrefix.'-video-'.($index + 1),
                 );
             }
         }
 
-        // Image story / highlight
         $candidates = $item['image_versions2']['candidates'] ?? [];
-        if (! empty($candidates)) {
+        if (! empty($candidates) && is_array($candidates)) {
             usort($candidates, fn ($a, $b) => ($b['width'] ?? 0) <=> ($a['width'] ?? 0));
             $url = $candidates[0]['url'] ?? null;
-            if ($url) {
+            if (is_string($url) && $url !== '') {
                 return new MediaItem(
                     url: $url,
                     type: 'image',
                     platform: $this->getPlatformName(),
-                    thumbnailUrl: $thumbnail,
+                    thumbnailUrl: $url,
                     quality: $quality,
-                    filename: 'instagram-story-'.($index + 1),
+                    filename: $filenamePrefix.'-photo-'.($index + 1),
                 );
             }
         }
@@ -327,77 +395,140 @@ class InstagramExtractor implements ExtractorInterface
     }
 
     // -------------------------------------------------------------------------
-    // Anonymous GraphQL API (public posts, no auth)
+    // GraphQL API
     // -------------------------------------------------------------------------
 
     private function fetchViaGraphQL(string $shortcode): array
     {
-        $response = Http::timeout(12)
-            ->withHeaders(self::GRAPHQL_HEADERS)
-            ->asForm()
-            ->post('https://www.instagram.com/api/graphql', $this->graphqlParams($shortcode));
+        return $this->requestGraphQL($shortcode, null);
+    }
+
+    private function requestGraphQL(string $shortcode, ?string $sessionId): array
+    {
+        try {
+            $csrf = $this->fetchCsrfToken();
+            $headers = [
+                'Accept' => '*/*',
+                'Accept-Language' => 'en-US,en;q=0.9',
+                'Content-Type' => 'application/x-www-form-urlencoded',
+                'Origin' => 'https://www.instagram.com',
+                'Referer' => "https://www.instagram.com/reel/{$shortcode}/",
+                'User-Agent' => self::USER_AGENT_WEB,
+                'X-ASBD-ID' => '129477',
+                'X-FB-Friendly-Name' => 'PolarisPostRootQuery',
+                'X-IG-App-ID' => self::IG_APP_ID,
+                'X-Requested-With' => 'XMLHttpRequest',
+            ];
+
+            $cookies = [];
+            if ($csrf !== null) {
+                $headers['X-CSRFToken'] = $csrf;
+                $cookies[] = "csrftoken={$csrf}";
+            }
+            if ($sessionId !== null) {
+                $cookies[] = "sessionid={$sessionId}";
+            }
+            if ($cookies !== []) {
+                $headers['Cookie'] = implode('; ', $cookies);
+            }
+
+            $response = Http::timeout(15)
+                ->withHeaders($headers)
+                ->withOptions(['allow_redirects' => ['max' => 3]])
+                ->asForm()
+                ->post(self::GRAPHQL_URL, [
+                    'variables' => json_encode([
+                        'shortcode' => $shortcode,
+                        '__relay_internal__pv__PolarisAIGMMediaWebLabelEnabledrelayprovider' => false,
+                    ], JSON_UNESCAPED_SLASHES),
+                    'doc_id' => self::DOC_ID,
+                    'server_timestamps' => 'true',
+                ]);
+        } catch (ConnectionException|Throwable) {
+            if ($sessionId !== null) {
+                $this->sessionRejected = true;
+            }
+
+            return [];
+        }
+
+        if ($sessionId !== null && $this->isSessionRejectedResponse($response)) {
+            return [];
+        }
 
         if (! $response->ok()) {
             return [];
         }
 
-        $media = $response->json('data.xdt_shortcode_media');
-        if (empty($media)) {
+        $json = $this->decodeInstagramJson($response->body());
+        if ($json === null) {
             return [];
         }
 
-        return $this->parseGraphQLMedia($media);
+        $webInfoItems = $json['data']['xdt_api__v1__media__shortcode__web_info']['items'] ?? null;
+        if (is_array($webInfoItems) && $webInfoItems !== []) {
+            return $this->parseMobileApiItems($webInfoItems, 'instagram');
+        }
+
+        $legacy = $json['data']['xdt_shortcode_media'] ?? null;
+        if (is_array($legacy) && $legacy !== []) {
+            return $this->parseGraphQLMedia($legacy);
+        }
+
+        return [];
     }
 
-    private function graphqlParams(string $shortcode): array
+    private function fetchCsrfToken(): ?string
     {
-        return [
-            'av'                          => '0',
-            '__d'                         => 'www',
-            '__user'                      => '0',
-            '__a'                         => '1',
-            '__req'                       => '3',
-            '__hs'                        => '19624.HYP:instagram_web_pkg.2.1..0.0',
-            'dpr'                         => '3',
-            '__ccg'                       => 'UNKNOWN',
-            '__rev'                       => '1008824440',
-            '__s'                         => 'xf44ne:zhh75g:xr51e7',
-            '__hsi'                       => '7282217488877343271',
-            '__dyn'                       => '7xeUmwlEnwn8K2WnFw9-2i5U4e0yoW3q32360CEbo1nEhw2nVE4W0om78b87C0yE5ufz81s8hwGwQwoEcE7O2l0Fwqo31w9a9x-0z8-U2zxe2GewGwso88cobEaU2eUlwhEe87q7-0iK2S3qazo7u1xwIw8O321LwTwKG1pg661pwr86C1mwraCg',
-            '__csr'                       => '',
-            '__comet_req'                 => '7',
-            'lsd'                         => 'AVqbxe3J_YA',
-            'jazoest'                     => '2957',
-            '__spin_r'                    => '1008824440',
-            '__spin_b'                    => 'trunk',
-            '__spin_t'                    => '1695523385',
-            'fb_api_caller_class'         => 'RelayModern',
-            'fb_api_req_friendly_name'    => 'PolarisPostActionLoadPostQueryQuery',
-            'variables'                   => json_encode([
-                'shortcode'                         => $shortcode,
-                'fetch_comment_count'               => null,
-                'fetch_related_profile_media_count' => null,
-                'parent_comment_count'              => null,
-                'child_comment_count'               => null,
-                'fetch_like_count'                  => null,
-                'fetch_tagged_user_count'           => null,
-                'fetch_preview_comment_count'       => null,
-                'has_threaded_comments'             => false,
-                'hoisted_comment_id'                => null,
-                'hoisted_reply_id'                  => null,
-            ]),
-            'server_timestamps'           => 'true',
-            'doc_id'                      => self::DOC_ID,
-        ];
+        try {
+            $response = Http::timeout(10)
+                ->withHeaders(['User-Agent' => self::USER_AGENT_WEB])
+                ->withOptions(['allow_redirects' => ['max' => 2]])
+                ->get('https://www.instagram.com/');
+        } catch (Throwable) {
+            return null;
+        }
+
+        foreach ($response->cookies() as $cookie) {
+            if ($cookie->getName() === 'csrftoken') {
+                return $cookie->getValue();
+            }
+        }
+
+        if (preg_match('/"csrf_token"\s*:\s*"([^"]+)"/', $response->body(), $m)) {
+            return $m[1];
+        }
+
+        return null;
+    }
+
+    /**
+     * Instagram sometimes prefixes JSON with for (;;);
+     *
+     * @return array<string, mixed>|null
+     */
+    private function decodeInstagramJson(string $body): ?array
+    {
+        $body = trim($body);
+        if (str_starts_with($body, 'for (;;);')) {
+            $body = substr($body, 9);
+        }
+
+        if ($body === '' || str_starts_with($body, '<')) {
+            return null;
+        }
+
+        $json = json_decode($body, true);
+
+        return is_array($json) ? $json : null;
     }
 
     private function parseGraphQLMedia(array $media): array
     {
-        $typename     = $media['__typename'] ?? '';
+        $typename = $media['__typename'] ?? '';
         $thumbnailUrl = $media['display_url'] ?? null;
-        $items        = [];
+        $items = [];
 
-        // Carousel (sidecar)
         if ($typename === 'GraphSidecar') {
             $edges = $media['edge_sidecar_to_children']['edges'] ?? [];
             $total = count($edges);
@@ -433,7 +564,6 @@ class InstagramExtractor implements ExtractorInterface
             return $items;
         }
 
-        // Video / Reel
         if (! empty($media['is_video'])) {
             $videoUrl = $media['video_url'] ?? null;
             if ($videoUrl) {
@@ -449,7 +579,6 @@ class InstagramExtractor implements ExtractorInterface
             return $items;
         }
 
-        // Single image
         if ($thumbnailUrl) {
             $items[] = new MediaItem(
                 url: $thumbnailUrl,
@@ -483,8 +612,22 @@ class InstagramExtractor implements ExtractorInterface
 
         $cmd[] = $url;
 
-        $result = Process::timeout(30)->run($cmd);
+        try {
+            $result = Process::timeout(45)->run($cmd);
+        } catch (Throwable) {
+            return [];
+        }
+
         if (! $result->successful()) {
+            $error = $result->errorOutput();
+            if ($sessionId !== null && (
+                str_contains($error, 'redirect loop')
+                || str_contains($error, 'login')
+                || str_contains($error, 'cookies')
+            )) {
+                $this->sessionRejected = true;
+            }
+
             return [];
         }
 
@@ -498,7 +641,7 @@ class InstagramExtractor implements ExtractorInterface
 
     private function parseYtDlpOutput(array $json): array
     {
-        $items     = [];
+        $items = [];
         $thumbnail = $json['thumbnail'] ?? null;
 
         if (! empty($json['entries'])) {
@@ -519,8 +662,8 @@ class InstagramExtractor implements ExtractorInterface
         }
 
         $mediaType = $json['ext'] ?? 'mp4';
-        $isImage   = in_array($mediaType, ['jpg', 'jpeg', 'png', 'webp'], true);
-        $url       = $this->bestVideoUrlFromYtDlp($json);
+        $isImage = in_array($mediaType, ['jpg', 'jpeg', 'png', 'webp'], true);
+        $url = $this->bestVideoUrlFromYtDlp($json);
 
         if ($url) {
             $items[] = new MediaItem(
