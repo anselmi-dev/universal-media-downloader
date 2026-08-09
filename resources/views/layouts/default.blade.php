@@ -171,8 +171,14 @@
         <script type="application/ld+json">{!! json_encode($schemaBreadcrumb, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
     @endif
 
-    <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700|space-mono:400,700" rel="stylesheet">
+    @php
+        $fontCss = 'https://fonts.bunny.net/css?family=poppins:400,600,700|space-mono:400&display=swap';
+    @endphp
+    <link rel="preconnect" href="https://fonts.bunny.net" crossorigin>
+    {{-- Non-blocking font CSS (avoids render-blocking / critical chain to bunny.net) --}}
+    <link rel="preload" as="style" href="{{ $fontCss }}">
+    <link rel="stylesheet" href="{{ $fontCss }}" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="{{ $fontCss }}"></noscript>
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @livewireStyles
