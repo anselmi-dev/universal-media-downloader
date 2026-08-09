@@ -22,29 +22,33 @@ class TiktokExtractor implements ExtractorInterface
         $url = $this->resolveShortUrl($url);
         $videoId = $this->extractVideoId($url);
 
-        // 1. Try aweme API first (often returns empty since TikTok added signature checks)
+        // 1. Aweme API (often empty since TikTok added signature checks)
         $data = $this->fetchViaAwemeApi($videoId);
-
-        if ($data === null) {
-            // 2. TikWM API (third-party, reliable, no installation needed)
-            $items = $this->fetchViaTikWm($url);
-            if (! empty($items)) {
-                return $items;
-            }
-
-            // 3. Fallback: scrape page (often blocked by TikTok "Please wait" challenge)
-            try {
-                $html = $this->fetchPage($url);
-                $data = $this->extractRehydrationData($html, $videoId);
-            } catch (RuntimeException $e) {
-                // 4. Last resort: yt-dlp if installed
-                $items = $this->extractViaYtDlp($url);
-                if (! empty($items)) {
-                    return $items;
-                }
-                throw $e;
-            }
+        if ($data !== null) {
+            return $this->parseMediaItems($data);
         }
+
+        // 2. TikWM (third-party; may be down)
+        $items = $this->fetchViaTikWm($url);
+        if (! empty($items)) {
+            return $items;
+        }
+
+        // 3. TikMate (third-party; no watermark)
+        $items = $this->fetchViaTikMate($url);
+        if (! empty($items)) {
+            return $items;
+        }
+
+        // 4. yt-dlp via mobile API hostname (webpage scrape is usually captcha-blocked)
+        $items = $this->extractViaYtDlp($url);
+        if (! empty($items)) {
+            return $items;
+        }
+
+        // 5. Last resort: scrape page HTML
+        $html = $this->fetchPage($url);
+        $data = $this->extractRehydrationData($html, $videoId);
 
         return $this->parseMediaItems($data);
     }
@@ -301,7 +305,9 @@ class TiktokExtractor implements ExtractorInterface
             || str_contains($host, 'tiktokcdn-us.com')
             || str_contains($host, 'tokcdn.com')
             || str_contains($host, 'tiktok.com')
-            || str_contains($host, 'tikwm.com');
+            || str_contains($host, 'tikwm.com')
+            || str_contains($host, 'tikmate.app')
+            || str_contains($host, 'nowmvideo.com');
     }
 
     private function ensureHttps(string $url): string
@@ -405,6 +411,51 @@ class TiktokExtractor implements ExtractorInterface
     }
 
     /**
+     * Fetch video via TikMate API (https://api.tikmate.app/api/lookup).
+     * Returns array of MediaItem or empty array on failure.
+     */
+    private function fetchViaTikMate(string $url): array
+    {
+        $response = Http::timeout(15)
+            ->withHeaders(['User-Agent' => self::USER_AGENT])
+            ->asForm()
+            ->post('https://api.tikmate.app/api/lookup', ['url' => $url]);
+
+        if (! $response->successful()) {
+            return [];
+        }
+
+        $data = $response->json();
+        if (! ($data['success'] ?? false) || empty($data['token']) || empty($data['id'])) {
+            return [];
+        }
+
+        $token = $data['token'];
+        $id = $data['id'];
+        $coverUrl = $data['cover'] ?? $data['dynamic_cover'] ?? null;
+        $downloadBase = 'https://tikmate.app/download/'.$token.'/'.$id.'.mp4';
+
+        return [
+            new MediaItem(
+                url: $downloadBase,
+                type: 'video',
+                platform: $this->getPlatformName(),
+                thumbnailUrl: $coverUrl,
+                quality: __('tiktok_video_no_watermark'),
+                filename: 'tiktok-video',
+            ),
+            new MediaItem(
+                url: $downloadBase.'?hd=1',
+                type: 'video',
+                platform: $this->getPlatformName(),
+                thumbnailUrl: $coverUrl,
+                quality: __('tiktok_video_hd'),
+                filename: 'tiktok-video-hd',
+            ),
+        ];
+    }
+
+    /**
      * Extract video URL via yt-dlp when native methods fail.
      * Returns array of MediaItem or empty array if yt-dlp is not available or fails.
      */
@@ -415,11 +466,14 @@ class TiktokExtractor implements ExtractorInterface
             return [];
         }
 
-        $result = Process::timeout(25)->run([
+        // Webpage rehydration is often captcha-blocked; force the mobile API hostname.
+        $result = Process::timeout(40)->run([
             $ytDlp,
             '-J',
             '--no-warnings',
             '--no-playlist',
+            '--extractor-args',
+            'tiktok:api_hostname=api16-normal-c-useast1a.tiktokv.com',
             $url,
         ]);
 
@@ -450,6 +504,8 @@ class TiktokExtractor implements ExtractorInterface
                 type: 'video',
                 platform: $this->getPlatformName(),
                 thumbnailUrl: $thumbnailUrl,
+                quality: __('tiktok_video_no_watermark'),
+                filename: 'tiktok-video',
             ),
         ];
     }

@@ -27,6 +27,9 @@ class DownloadController extends Controller
         'tiktok.com',
         // TikWM API CDN
         'tikwm.com',
+        // TikMate download proxy
+        'tikmate.app',
+        'nowmvideo.com',
         // Instagram / Facebook CDN (e.g. scontent-lga3-2.cdninstagram.com, video.cdninstagram.com)
         'cdninstagram.com',
         'fbcdn.net',
@@ -298,11 +301,19 @@ class DownloadController extends Controller
 
         $isTiktokCdn = str_contains($host, 'tiktokcdn')
             || str_contains($host, 'tokcdn')
-            || str_contains($host, 'tikwm');
+            || str_contains($host, 'tikwm')
+            || str_contains($host, 'tiktok.com');
 
         if ($isTiktokCdn) {
             return [
                 'Referer' => 'https://www.tiktok.com/',
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            ];
+        }
+
+        if (str_contains($host, 'tikmate.app') || str_contains($host, 'nowmvideo.com')) {
+            return [
+                'Referer' => 'https://tikmate.app/',
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ];
         }
