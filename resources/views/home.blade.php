@@ -95,7 +95,7 @@
     </section>
 
     {{-- Legal note --}}
-    <p class="text-xs text-[#646464]/80 leading-relaxed max-w-2xl border-t border-zinc-200/80 pt-6">
+    <p class="text-xs text-[#525252] leading-relaxed max-w-2xl border-t border-zinc-200/80 pt-6">
         {{ $t('legal_note') }}
     </p>
 @endsection
